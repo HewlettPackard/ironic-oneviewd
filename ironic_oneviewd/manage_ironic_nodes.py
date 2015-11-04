@@ -21,7 +21,6 @@ import six
 
 import common
 import config_client
-#import rabbitmq_client
 import service_manager
 
 from ironic.common import exception
