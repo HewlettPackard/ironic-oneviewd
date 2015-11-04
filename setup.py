@@ -31,7 +31,7 @@ setup(
     author_email='sinvalneto01@gmail.com',
     url='https://github.com/sinvalmendes/ironic-oneviewd',
     packages=[
-        'ironic-oneviewd',
+        'ironic_oneviewd',
     ],
     package_dir={'ironic-oneviewd':
                  'ironic-oneviewd'},
