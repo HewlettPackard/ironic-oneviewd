@@ -44,10 +44,31 @@ LOG = logging.getLogger(__name__)
 ONEVIEW_POWER_ON = 'On'
 ONEVIEW_POWER_OFF = 'Off'
 
+def get_oneview_client(conf):
+    kwargs = {
+        'username': conf.oneview.username,
+        'password': conf.oneview.password,
+        'manager_url': conf.oneview.manager_url,
+        'allow_insecure_connections': False,
+        'tls_cacert_file': ''
+    }
+    if conf.oneview.allow_insecure_connections.lower() == 'true':
+        kwargs['allow_insecure_connections'] = True
+    if conf.oneview.tls_cacert_file:
+        kwargs['tls_cacert_file'] = conf.oneview.tls_cacert_file
+    return OneViewClient(**kwargs)
+    
+
 class OneViewRequestAPI:
-    def __init__(self):
+    def __init__(self, manager_url, username, password,
+                 allow_insecure_connections, tls_cacert_file):
         self.token = None
-        self.oneview_conf = config_client.ConfClient().oneview
+        self.manager_url = manager_url
+        self.username = username
+        self.password = password
+        self.tls_cacert_file = tls_cacert_file
+        self.allow_insecure_connections = allow_insecure_connections
+        self.max_retries = 50
 
     def _wait_task_completes_returning_status(self, task_uri, max_waiting_time=10):
         def _check_task_status(task_uri):
@@ -68,8 +89,8 @@ class OneViewRequestAPI:
 
     def _get_verify_connection_option(self):
         verify_status = False
-        user_cacert = self.oneview_conf.get_tls_cacert_file()
-        if self.oneview_conf.get_allow_insecure_connections() is False:
+        user_cacert = self.tls_cacert_file
+        if self.allow_insecure_connections is False:
             if(user_cacert is None):
                 verify_status = True
             else:
@@ -96,13 +117,12 @@ class OneViewRequestAPI:
 
 
     def _new_token(self):
-        LOG.info(_LI("Using OneView credentials specified in synch.conf"))
-        LOG.info(("Using OneView credentials specified in synch.conf"))
-        url = '%s%s' % (self.oneview_conf.get_manager_url(),
+        LOG.info(_LI("Using OneView credentials specified in configuration file"))
+        url = '%s%s' % (self.manager_url,
                         oneview_uri.AUTHENTICATION_URL)
         body = {
-            'password': self.oneview_conf.get_password(),
-            'userName': self.oneview_conf.get_username()
+            'password': self.password,
+            'userName': self.username
         }
         headers = {'content-type': 'application/json'}
         verify_status = self._get_verify_connection_option()
@@ -148,7 +168,7 @@ class OneViewRequestAPI:
 
 
     def prepare_and_do_request(self, uri, body={}, request_type='GET', api_version='200'):
-        max_retries=self.oneview_conf.get_max_retries()
+        max_retries=self.max_retries
         
         self._update_token()
         headers = {
@@ -156,7 +176,7 @@ class OneViewRequestAPI:
            'X-Api-Version': api_version,
            'Auth': self.token
         }
-        url = '%s%s' % (self.oneview_conf.get_manager_url(), uri)
+        url = '%s%s' % (self.manager_url, uri)
         verify_status = self._get_verify_connection_option()
         
         json_response = None
@@ -263,7 +283,6 @@ class OneViewServerProfileTemplateAPI(OneViewRequestAPI):
         server_profile_server_hardware_uri):
         new_server_profile = self.prepare_and_do_request(
             uri=server_profile_template_uri + "/new-profile")
-
         new_server_profile['name'] = server_profile_name
         new_server_profile['serverHardwareUri'] = server_profile_server_hardware_uri
         return new_server_profile
@@ -287,7 +306,7 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
         return self.prepare_and_do_request(uri=server_profile_uri)
 
     def _wait_to_assign(self, task_uri):
-        max_retries=self.oneview_conf.get_max_retries()
+        max_retries=self.max_retries
         retries = 0
 
         task = self.prepare_and_do_request(uri=task_uri)
@@ -396,7 +415,7 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
 
     def clone_and_assign(self, server_hardware_uri, server_profile_template_uri,
                          node_uuid):
-        max_retries=self.oneview_conf.get_max_retries()
+        max_retries=self.max_retries
         server_profile_template = self.get_server_profile_template(
                                       server_profile_template_uri)
         sh_api = OneViewServerHardwareAPI()
@@ -427,15 +446,24 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
     def generate_and_assign_server_profile_from_server_profile_template(
         self, server_profile_template_uri, server_profile_name,
         server_profile_server_hardware_uri):
-        ov_spt_api = OneViewServerProfileTemplateAPI()
+        ov_spt_api = OneViewServerProfileTemplateAPI(self.manager_url,
+                                                     self.username,
+                                                     self.password,
+                                                     self.allow_insecure_connections,
+                                                     self.tls_cacert_file)
+
         new_server_profile_dict = ov_spt_api.generate_server_profile_from_server_profile_template(
             server_profile_template_uri, server_profile_name,
             server_profile_server_hardware_uri)
         return self.create(new_server_profile_dict)
 
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
-        max_retries = self.oneview_conf.get_max_retries()
-        sh_api = OneViewServerHardwareAPI()
+        max_retries = self.max_retries
+        sh_api = OneViewServerHardwareAPI(self.manager_url,
+                                          self.username,
+                                          self.password,
+                                          self.allow_insecure_connections,
+                                          self.tls_cacert_file)
         server_profile_body = self.prepare_and_do_request(uri=server_profile_uri)
         server_profile_body['serverHardwareUri'] = None
         server_profile_body['enclosureUri'] = None
@@ -455,9 +483,98 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
                 % max_retries
             )
 
+class ResourceAPI(OneViewRequestAPI):
+    def get(self, uri, field=None):
+        resource = self.prepare_and_do_request(uri)
+        return resource if field is None else resource[field]
+
+    def _list(self, uri, fields=None):
+        obj_list = self.prepare_and_do_request(uri).get("members")
+        if fields is None:
+            return obj_list
+
+        filtered_list = []
+
+        for obj_dict in obj_list:
+            if self._is_dict_elegible(obj_dict, fields):
+                filtered_list.append(obj_dict)
+
+        return filtered_list
+
+    def _is_dict_elegible(self, obj_dict, fields):
+        for key, value in fields.items():
+            if obj_dict[key] != value:
+                return False
+        return True
+
+class OneViewCertificateAPI(ResourceAPI):
+    def get_certificate(self):
+        return self.get(oneview_uri.CERTIFICATE_AND_KEY_URI,
+                        'base64SSLCertData')
+
+    def get_key(self):
+        return self.get(oneview_uri.CERTIFICATE_AND_KEY_URI,
+                        'base64SSLKeyData')
+
+    def get_ca(self):
+        return self.get(oneview_uri.CA_URI)
+
+    def post_certificate(self):
+        body = {'type': 'RabbitMqClientCertV2', 'commonName': 'default'}
+
+        return self.prepare_and_do_request(oneview_uri.CERTIFICATE_RABBIT_MQ,
+                                           body=body, request_type='POST')
+
+
+class OneViewServerHardwareTypeAPI(ResourceAPI):
+    pass
+
+
+class OneViewEnclosureGroupAPI(ResourceAPI):
+    pass
+
+#class OneViewClient:
+#    def __init__(self, config):
+#        self.certificate_api = OneViewCertificateAPI(config)
+#        self.server_hardware_api = OneViewServerHardwareAPI(config)
+#        self.server_profile_api = OneViewServerProfileAPI(config)
+
 
 class OneViewClient:
-    def __init__(self):
-        self.certificate_api = OneViewCertificateAPI()
-        self.server_hardware_api = OneViewServerHardwareAPI()
-        self.server_profile_api = OneViewServerProfileAPI()
+    def __init__(self, manager_url, username, password,
+                 allow_insecure_connections, tls_cacert_file):
+        self.certificate = OneViewCertificateAPI(
+            manager_url,
+            username,
+            password,
+            allow_insecure_connections,
+            tls_cacert_file
+        )
+        self.server_hardware = OneViewServerHardwareAPI(
+            manager_url,
+            username,
+            password,
+            allow_insecure_connections,
+            tls_cacert_file
+        )
+        self.server_profile = OneViewServerProfileAPI(
+            manager_url,
+            username,
+            password,
+            allow_insecure_connections,
+            tls_cacert_file
+        )
+        self.server_hardware_type = OneViewServerHardwareTypeAPI(
+            manager_url,
+            username,
+            password,
+            allow_insecure_connections,
+            tls_cacert_file
+        )
+        self.enclosure_group = OneViewEnclosureGroupAPI(
+            manager_url,
+            username,
+            password,
+            allow_insecure_connections,
+            tls_cacert_file
+        )

@@ -1,57 +1,29 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+# THIS FILE IS MANAGED BY THE GLOBAL REQUIREMENTS REPO - DO NOT EDIT
+import setuptools
 
+# In python < 2.7.4, a lazy loading of package `pbr` will break
+# setuptools if some other modules registered functions in `atexit`.
+# solution from: http://bugs.python.org/issue15881#msg170215
 try:
-    from setuptools import setup
+    import multiprocessing  # noqa
 except ImportError:
-    from distutils.core import setup
+    pass
 
-
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
-
-with open('HISTORY.rst') as history_file:
-    history = history_file.read().replace('.. :changelog:', '')
-
-requirements = [
-    # TODO: put package requirements here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
-
-setup(
-    name='ironic-oneviewd',
-    version='0.1.0',
-    description="Python daemon of the OneView driver for Ironic.",
-    long_description=readme + '\n\n' + history,
-    author="Sinval Vieira",
-    author_email='sinvalneto01@gmail.com',
-    url='https://github.com/sinvalmendes/ironic-oneviewd',
-    packages=[
-        'ironic_oneviewd',
-    ],
-    package_dir={'ironic-oneviewd':
-                 'ironic-oneviewd'},
-    include_package_data=True,
-    install_requires=requirements,
-    license="ISCL",
-    zip_safe=False,
-    keywords='ironic-oneviewd',
-    classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: ISC License (ISCL)',
-        'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-    ],
-    test_suite='tests',
-    tests_require=test_requirements
-)
+setuptools.setup(
+    setup_requires=['pbr'],
+    pbr=True)                                                                                          

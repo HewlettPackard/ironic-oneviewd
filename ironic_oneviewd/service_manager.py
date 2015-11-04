@@ -21,26 +21,26 @@ from oslo_config import cfg
 from oneview_client import OneViewClient
 from openstack_client import OpenstackClient
 
-opts = [
-    cfg.StrOpt('default_deploy_kernel_id',
-               help='Deploy kernel image used by the synch mechanism'),
-    cfg.StrOpt('default_deploy_ramdisk_id',
-               help='Deploy ramdisk image used by the synch mechanism'),
-    cfg.StrOpt('default_sync_driver',
-               help='Default driver to synch with OneView'),
-]
+#opts = [
+#    cfg.StrOpt('default_deploy_kernel_id',
+#               help='Deploy kernel image used by the synch mechanism'),
+#    cfg.StrOpt('default_deploy_ramdisk_id',
+#               help='Deploy ramdisk image used by the synch mechanism'),
+#    cfg.StrOpt('default_sync_driver',
+#               help='Default driver to synch with OneView'),
+#]
 
-CONF = cfg.CONF
-CONF.register_opts(opts, group='ironic')
-CONF(default_config_files=['sync.conf'])
+#CONF = cfg.CONF
+#CONF.register_opts(opts, group='ironic')
+#CONF(default_config_files=['sync.conf'])
 
 os_client = OpenstackClient()
 ov_client = OneViewClient()
 sh_api = ov_client.server_hardware_api
 sp_api = ov_client.server_profile_api
 
-def get_config_options():
-    return CONF
+#def get_config_options():
+#    return CONF
 
 
 #===============================================================================
