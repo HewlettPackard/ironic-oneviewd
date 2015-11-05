@@ -38,4 +38,5 @@ def do_manage_ironic_nodes(args):
 
     conf = ConfClient(config_file, defaults)
     node_manager = NodeManager(conf)
-    node_manager.pull_ironic_nodes()
+    while True:
+        node_manager.pull_ironic_nodes()

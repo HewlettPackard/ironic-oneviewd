@@ -49,7 +49,10 @@ class NodeManager:
         ironic_nodes = self.facade.get_ironic_node_list()
         for node in ironic_nodes:
             if node.driver in self.supported_drivers:
-                self.manage_node_provision_state(node)
+                try:
+                    self.manage_node_provision_state(node)
+                except Exception as ex:
+                    print 'Something went wrong reading node info.'
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state

@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Setup of unit and functional test with tox and .testr.conf (tests not passing yet
 * Finishing version 0.0.1 with no automatic tests
 * Finishing setup project boilerplate
 * Setup of project boilerplate with cookiecutter

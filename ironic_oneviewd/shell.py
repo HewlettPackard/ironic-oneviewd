@@ -62,8 +62,7 @@ class IronicOneView(object):
                             version=VERSION)
 
         parser.add_argument('-c', '--config-file',
-                            default='/etc/ironic-oneviewd/'
-                                    'ironic-oneviewd.conf',
+                            default='~/ironic-oneviewd.conf',
                             help='Default path to configuration file')
         return parser
 
@@ -153,7 +152,7 @@ def main():
     try:
         IronicOneView().main(sys.argv[1:])
     except KeyboardInterrupt:
-        print("... terminating OneView node creation tool", file=sys.stderr)
+        print("\nironic-oneviewd stopped", file=sys.stderr)
         sys.exit(130)
     except Exception as e:
         print(encodeutils.safe_encode(six.text_type(e)), file=sys.stderr)
