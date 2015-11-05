@@ -17,32 +17,27 @@
 #    under the License.
 
 import json
-import os
 import time
 
 import requests
-
-import config_client
-import oneview_uri
-
-from ironic.common.i18n import _LE
-from ironic.common.i18n import _LI
-from ironic.common import states
-
-from ironic.common.i18n import _
-from oslo_config import cfg
-from oslo_config import types
+from requests.packages import urllib3
 from oslo_log import log as logging
 
-import sync_exceptions as exception 
+from ironic_oneviewd.config import ConfigClient
+from ironic_oneviewd import oneview_uri
+from ironic_oneviewd.openstack.common._i18n import _LE
+from ironic_oneviewd.openstack.common._i18n import _LI
+from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd import sync_exceptions as exception
 
-import requests.packages.urllib3
-requests.packages.urllib3.disable_warnings()
+
+urllib3.disable_warnings()
 
 LOG = logging.getLogger(__name__)
 
 ONEVIEW_POWER_ON = 'On'
 ONEVIEW_POWER_OFF = 'Off'
+
 
 def get_oneview_client(conf):
     kwargs = {
@@ -57,7 +52,7 @@ def get_oneview_client(conf):
     if conf.oneview.tls_cacert_file:
         kwargs['tls_cacert_file'] = conf.oneview.tls_cacert_file
     return OneViewClient(**kwargs)
-    
+
 
 class OneViewRequestAPI:
     def __init__(self, manager_url, username, password,
@@ -97,10 +92,8 @@ class OneViewRequestAPI:
                 verify_status = user_cacert
         return verify_status
 
-
     def _is_token_valid(self):
         return self.token is not None
-
 
     def _try_execute_request(self, url, request_type, body, headers,
                              verify_status):
@@ -114,7 +107,6 @@ class OneViewRequestAPI:
                       % (str(ex.message).split(':')[-1]))
             raise exception.OneViewConnectionError(
                 "Can't connect to OneView: %s" % str(ex.message))
-
 
     def _new_token(self):
         LOG.info(_LI("Using OneView credentials specified in configuration file"))
@@ -132,7 +124,7 @@ class OneViewRequestAPI:
         repeat = True
         while repeat:
             r = self._try_execute_request(url, 'POST', body, headers,
-                                      verify_status)
+                                          verify_status)
             # NOTE: Workaround to fix JsonDecode problems
             try:
                 json_response = r.json()
@@ -141,11 +133,9 @@ class OneViewRequestAPI:
                 repeat = True
         return json_response.get('sessionID')
 
-
     def _update_token(self):
         if not self._is_token_valid():
             self.token = self._new_token()
-
 
     def _check_request_status(self, response):
         repeat = False
@@ -166,19 +156,19 @@ class OneViewRequestAPI:
             LOG.warn("Status not recognized:", status, response_json)
         return repeat
 
+    def prepare_and_do_request(self, uri, body={}, request_type='GET',
+                               api_version='200'):
+        max_retries = self.max_retries
 
-    def prepare_and_do_request(self, uri, body={}, request_type='GET', api_version='200'):
-        max_retries=self.max_retries
-        
         self._update_token()
         headers = {
-           'content-type': 'application/json',
-           'X-Api-Version': api_version,
-           'Auth': self.token
+            'content-type': 'application/json',
+            'X-Api-Version': api_version,
+            'Auth': self.token
         }
         url = '%s%s' % (self.manager_url, uri)
         verify_status = self._get_verify_connection_option()
-        
+
         json_response = None
         repeat = True
         retries = 0
@@ -189,60 +179,33 @@ class OneViewRequestAPI:
             try:
                 json_response = r.json()
                 repeat = self._check_request_status(r)
-            except Exception as ex:
+            except Exception:
                 repeat = True
                 retries += 1
         return json_response
 
 
-class OneViewCertificateAPI(OneViewRequestAPI):
-
-    def get_certificate(self):
-        return self.prepare_and_do_request(
-            oneview_uri.CERTIFICATE_AND_KEY_URI).get('base64SSLCertData')
-
-
-    def get_key(self):
-        return self.prepare_and_do_request(
-            oneview_uri.CERTIFICATE_AND_KEY_URI).get('base64SSLKeyData')
-
-
-    def get_ca(self):
-        return self.prepare_and_do_request(oneview_uri.CA_URI)
-
-
-    def post_certificate(self):
-        body = {'type': 'RabbitMqClientCertV2', 'commonName': 'default'}
-
-        return self.prepare_and_do_request(oneview_uri.CERTIFICATE_RABBIT_MQ,
-                                           body=body, request_type='POST')
-
-
 class OneViewServerHardwareAPI(OneViewRequestAPI):
 
     def get_server_hardware(self, server_hardware_uri):
-#       return self.prepare_and_do_request(uri)
         server_hardware_json = self.prepare_and_do_request(server_hardware_uri)
         if server_hardware_json.get("uri") is None:
             raise exception.OneViewResourceNotFoundError()
 
         return server_hardware_json
 
-
     def get_server_hardware_list(self):
         uri = "/rest/server-hardware?start=0&count=-1"
         server_hardwares = self.prepare_and_do_request(uri)
         return server_hardwares.get("members")
 
-   
     def get_server_profile_assigned_to_sh(self, server_hardware_uri):
         server_hardware_json = self.get_server_hardware(server_hardware_uri)
         return server_hardware_json.get('serverProfileUri')
- 
 
     def get_node_power_state(self, server_hardware_uri):
-        power_state = self.prepare_and_do_request(uri=server_hardware_uri,
-                      request_type='GET').get('powerState')
+        power_state = self.prepare_and_do_request(
+            uri=server_hardware_uri, request_type='GET').get('powerState')
         if power_state == 'On' or power_state == 'PoweringOff':
             return states.POWER_ON
         elif power_state == 'Off' or power_state == 'PoweringOn':
@@ -252,12 +215,11 @@ class OneViewServerHardwareAPI(OneViewRequestAPI):
         else:
             return states.ERROR
 
-
     def parse_server_hardware_to_dict(self, server_hardware):
         port_map = server_hardware.get('portMap')
         try:
-            physical_ports = port_map.get('deviceSlots')[0].get(
-                                'physicalPorts')
+            slot = port_map.get('deviceSlots')[0]
+            physical_ports = slot.get('physicalPorts')
             mac_address = physical_ports[0].get('mac')
         except Exception:
             raise Exception("Server hardware primary physical NIC not found.")
@@ -278,35 +240,26 @@ class OneViewServerHardwareAPI(OneViewRequestAPI):
 
 
 class OneViewServerProfileTemplateAPI(OneViewRequestAPI):
-    def generate_server_profile_from_server_profile_template(self,
-        server_profile_template_uri, server_profile_name,
-        server_profile_server_hardware_uri):
+    def generate_server_profile_from_server_profile_template(
+            self, server_profile_template_uri, server_profile_name,
+            server_profile_server_hardware_uri):
         new_server_profile = self.prepare_and_do_request(
             uri=server_profile_template_uri + "/new-profile")
         new_server_profile['name'] = server_profile_name
         new_server_profile['serverHardwareUri'] = server_profile_server_hardware_uri
         return new_server_profile
 
-    #def _assign_server_profile(self, server_profile):
-    #    created_server_profile = server_profile
-    #    
-    #    return created_server_profile
-
-    #def generate_and_assign_server_profile_from_server_profile_template(self,
-    #    server_profile_template_uri, server_profile_name,
-    #    server_profile_server_hardware_uri):
-    #    pass
-
 
 class OneViewServerProfileAPI(OneViewRequestAPI):
     def list(self):
-        return self.prepare_and_do_request(uri=oneview_uri.SERVER_PROFILE_LIST_URI).get('members')
+        return self.prepare_and_do_request(
+            uri=oneview_uri.SERVER_PROFILE_LIST_URI).get('members')
 
     def get(self, server_profile_uri):
         return self.prepare_and_do_request(uri=server_profile_uri)
 
     def _wait_to_assign(self, task_uri):
-        max_retries=self.max_retries
+        max_retries = self.max_retries
         retries = 0
 
         task = self.prepare_and_do_request(uri=task_uri)
@@ -322,21 +275,22 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
         return task
 
     def create(self, server_profile):
-        task = self.prepare_and_do_request(uri=oneview_uri.SERVER_PROFILE_URI,
+        task = self.prepare_and_do_request(
+            uri=oneview_uri.SERVER_PROFILE_URI,
             body=server_profile,
-            request_type='POST')
+            request_type='POST'
+        )
         task = self._wait_to_assign(task['uri'])
         return task['associatedResource']['resourceUri']
 
     def delete(self, server_profile_name):
-        task = self.prepare_and_do_request(
-            uri='/rest/server-profiles?filter=name="%s"' % (server_profile_name),
-            request_type='DELETE')
+        uri = '/rest/server-profiles?filter=name="%s"' % (server_profile_name)
+        task = self.prepare_and_do_request(uri=uri, request_type='DELETE')
         task = self._wait_to_assign(task['uri'])
 
     def server_profile_template_list(self):
-        return [server_profile for server_profile in self.list() if server_profile.get('serverHardwareUri') is None]
-
+        return [server_profile for server_profile in self.list()
+                if server_profile.get('serverHardwareUri') is None]
 
     def get_server_profile_template(self, server_profile_template_uri):
         if server_profile_template_uri is None:
@@ -351,7 +305,6 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
 
         return server_profile_template_json
 
-
     def _build_clone_body(self, server_profile_dict, server_hardware_dict,
                           server_profile_name):
         server_profile_dict['name'] = server_profile_name
@@ -365,17 +318,21 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
 
         add_volume_fields = []
 
-        volumeAttachments = server_profile_dict["sanStorage"]["volumeAttachments"]
+        volumeAttachments = (
+            server_profile_dict["sanStorage"]["volumeAttachments"])
         for storage_information in volumeAttachments:
-            volume_data = get_volume_information(storage_information["volumeUri"])
-            volume_fields = {"volumeProvisionType": volume_data["provisionType"],
-                             "volumeProvisionedCapacityBytes":
-                                 volume_data["provisionedCapacity"],
-                             "volumeShareable": volume_data["shareable"],
-                             "volumeName": volume_data["deviceVolumeName"] + "-02",
-                             "permanent": volume_data["isPermanent"],
-                             "volumeUri": None,
-                             "lun": None}
+            volume_data = (
+                get_volume_information(storage_information["volumeUri"]))
+            volume_fields = {
+                "volumeProvisionType": volume_data["provisionType"],
+                "volumeProvisionedCapacityBytes":
+                    volume_data["provisionedCapacity"],
+                "volumeShareable": volume_data["shareable"],
+                "volumeName": volume_data["deviceVolumeName"] + "-02",
+                "permanent": volume_data["isPermanent"],
+                "volumeUri": None,
+                "lun": None
+            }
             add_volume_fields.append(volume_fields)
 
         len_vol_att = len(server_profile_dict["sanStorage"]["volumeAttachments"])
@@ -412,21 +369,21 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
 
         return server_profile_dict
 
-
-    def clone_and_assign(self, server_hardware_uri, server_profile_template_uri,
-                         node_uuid):
-        max_retries=self.max_retries
+    def clone_and_assign(self, server_hardware_uri,
+                         server_profile_template_uri, node_uuid):
+        max_retries = self.max_retries
         server_profile_template = self.get_server_profile_template(
-                                      server_profile_template_uri)
+            server_profile_template_uri)
         sh_api = OneViewServerHardwareAPI()
         server_hardware = sh_api.get_server_hardware(server_hardware_uri)
         server_profile_name = "Ironic [%s]" % (node_uuid)
-        server_profile_clone_body = self._build_clone_body(server_profile_template,
-                                                      server_hardware,
-                                                      server_profile_name)
-        ret = self.prepare_and_do_request(uri="/rest/server-profiles",
-                                     body=server_profile_clone_body,
-                                     request_type="POST")
+        server_profile_clone_body = self._build_clone_body(
+            server_profile_template, server_hardware, server_profile_name)
+        ret = self.prepare_and_do_request(
+            uri="/rest/server-profiles",
+            body=server_profile_clone_body,
+            request_type="POST"
+        )
         if 'taskStatus' not in ret:
             raise exception.OneViewServerProfileCloneError()
         else:
@@ -435,26 +392,34 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
             while not isAssigned and retries < max_retries:
                 retries += 1
                 time.sleep(5)
-                isAssigned = (sh_api.get_server_hardware(server_hardware_uri).get('state') == 'ProfileApplied')
+                server_hardware = sh_api.get_server_hardware(
+                    server_hardware_uri)
+                isAssigned = server_hardware.get('state') == 'ProfileApplied'
             if not isAssigned:
                 raise exception.OneViewMaxRetriesExceededError(
                     _("Server profile wasn't applied after %s retries.")
                     % max_retries
                 )
-        return sh_api.get_server_hardware(server_hardware_uri).get('serverProfileUri')
+        server_hardware = sh_api.get_server_hardware(server_hardware_uri)
+        return server_hardware.get('serverProfileUri')
 
     def generate_and_assign_server_profile_from_server_profile_template(
-        self, server_profile_template_uri, server_profile_name,
-        server_profile_server_hardware_uri):
-        ov_spt_api = OneViewServerProfileTemplateAPI(self.manager_url,
-                                                     self.username,
-                                                     self.password,
-                                                     self.allow_insecure_connections,
-                                                     self.tls_cacert_file)
+            self, server_profile_template_uri, server_profile_name,
+            server_profile_server_hardware_uri):
+        ov_spt_api = OneViewServerProfileTemplateAPI(
+            self.manager_url,
+            self.username,
+            self.password,
+            self.allow_insecure_connections,
+            self.tls_cacert_file
+        )
 
-        new_server_profile_dict = ov_spt_api.generate_server_profile_from_server_profile_template(
-            server_profile_template_uri, server_profile_name,
-            server_profile_server_hardware_uri)
+        new_server_profile_dict = (
+            ov_spt_api.generate_server_profile_from_server_profile_template(
+                server_profile_template_uri, server_profile_name,
+                server_profile_server_hardware_uri
+            )
+        )
         return self.create(new_server_profile_dict)
 
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
@@ -464,24 +429,33 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
                                           self.password,
                                           self.allow_insecure_connections,
                                           self.tls_cacert_file)
-        server_profile_body = self.prepare_and_do_request(uri=server_profile_uri)
+        server_profile_body = self.prepare_and_do_request(
+            uri=server_profile_uri)
         server_profile_body['serverHardwareUri'] = None
         server_profile_body['enclosureUri'] = None
         server_profile_body['enclosureBay'] = None
-        
-        self.prepare_and_do_request(uri=server_profile_uri, body=server_profile_body, request_type="PUT") 
-        
+
+        self.prepare_and_do_request(
+            uri=server_profile_uri,
+            body=server_profile_body,
+            request_type="PUT"
+        )
+
         isNotAssigned = False
         retries = 0
         while not isNotAssigned and retries < max_retries:
             retries += 1
             time.sleep(5)
-            isNotAssigned = (sh_api.get_server_hardware(server_hardware_uri).get('state') == 'NoProfileApplied')
+            isNotAssigned = (
+                sh_api.get_server_hardware(server_hardware_uri).get('state') ==
+                'NoProfileApplied'
+            )
         if not isNotAssigned:
             raise exception.OneViewMaxRetriesExceededError(
-                _("Server profile wasn't removed successfuly after %s retries.")
+                _("Server profile wasn't removed successfuly after %s retries")
                 % max_retries
             )
+
 
 class ResourceAPI(OneViewRequestAPI):
     def get(self, uri, field=None):
@@ -506,6 +480,7 @@ class ResourceAPI(OneViewRequestAPI):
             if obj_dict[key] != value:
                 return False
         return True
+
 
 class OneViewCertificateAPI(ResourceAPI):
     def get_certificate(self):
@@ -533,7 +508,7 @@ class OneViewServerHardwareTypeAPI(ResourceAPI):
 class OneViewEnclosureGroupAPI(ResourceAPI):
     pass
 
-#class OneViewClient:
+# class OneViewClient:
 #    def __init__(self, config):
 #        self.certificate_api = OneViewCertificateAPI(config)
 #        self.server_hardware_api = OneViewServerHardwareAPI(config)

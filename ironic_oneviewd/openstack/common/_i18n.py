@@ -12,7 +12,7 @@
 
 """oslo.i18n integration module.
 
-See http://docs.openstack_client.org/developer/oslo.i18n/usage.html
+See http://docs.openstack.org/developer/oslo.i18n/usage.html
 
 """
 
@@ -24,7 +24,7 @@ try:
     # repository. It is OK to have more than one translation function
     # using the same domain, since there will still only be one message
     # catalog.
-    _translators = oslo_i18n.TranslatorFactory(domain='ironic-oneview-cli')
+    _translators = oslo_i18n.TranslatorFactory(domain='ironic_oneviewd')
 
     # The primary translation function using the well-known name "_"
     _ = _translators.primary

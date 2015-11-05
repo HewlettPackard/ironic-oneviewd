@@ -18,8 +18,8 @@
 
 import json
 
-from ironic.common import exception
-from ironic.common.i18n import _
+from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd import sync_exceptions
 import oneview_client
 
 REQUIRED_ON_PROPERTIES = {
@@ -27,23 +27,23 @@ REQUIRED_ON_PROPERTIES = {
     'server_profile_template_uri': _("Server Profile Template URI required"),
 }
 
-#REQUIRED_ON_INSTANCE_INFO = {
+# REQUIRED_ON_INSTANCE_INFO = {
 #    'server_profile_template_uri': _("Server Profile Template URI to clone "
 #                                     "from. Required."),
-#}
+# }
 
 REQUIRED_ON_EXTRAS = {
     'server_hardware_uri': _("Server Hardware URI. Required."),
 }
 
-#OPTIONAL_ON_PROPERTIES = {
+# OPTIONAL_ON_PROPERTIES = {
 #    'enclosure_group_uri': _("Enclosure Group URI.")
-#}
+# }
 
-#COMMON_PROPERTIES = {}
-#COMMON_PROPERTIES.update(REQUIRED_ON_PROPERTIES)
-#COMMON_PROPERTIES.update(REQUIRED_ON_EXTRAS)
-#COMMON_PROPERTIES.update(OPTIONAL_ON_PROPERTIES)
+# COMMON_PROPERTIES = {}
+# COMMON_PROPERTIES.update(REQUIRED_ON_PROPERTIES)
+# COMMON_PROPERTIES.update(REQUIRED_ON_EXTRAS)
+# COMMON_PROPERTIES.update(OPTIONAL_ON_PROPERTIES)
 
 
 def node_has_server_profile(driver_info):
@@ -52,7 +52,7 @@ def node_has_server_profile(driver_info):
     return server_profile_uri is not None
 
 
-#def parse_driver_info(node):
+# def parse_driver_info(node):
 #    properties = _verify_node_properties(node)
 #    extra = _verify_node_extra(node)
 
@@ -88,7 +88,7 @@ def verify_node_properties(node):
     properties = node.properties.get('capabilities', '')
     for key in REQUIRED_ON_PROPERTIES:
         if key not in properties:
-            raise exception.MissingParameterValue(
+            raise sync_exceptions.MissingParameterValue(
                 _("Missing the following OneView data in node's "
                   "properties/capabilities: %s.") % key
             )
@@ -100,7 +100,7 @@ def verify_node_extra(node):
     extra = node.extra or {}
     for key in REQUIRED_ON_EXTRAS:
         if not extra.get(key):
-            raise exception.MissingParameterValue(
+            raise sync_exceptions.MissingParameterValue(
                 _("Missing the following OneView data in node's extra: %s.")
                 % key
             )
@@ -116,7 +116,7 @@ def capabilities_to_dict(capabilities):
                 key, value = capability.split(':')
                 capabilities_dict[key] = value
         except ValueError:
-            raise exception.InvalidParameterValue(
+            raise sync_exceptions.InvalidParameterValue(
                 _("Malformed capabilities value: %s") % capability
             )
 

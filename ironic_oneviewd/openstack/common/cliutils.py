@@ -30,7 +30,7 @@ import prettytable
 import six
 from six import moves
 
-from ironic_oneview_cli.openstack.common._i18n import _
+from ironic_oneviewd.openstack.common._i18n import _
 
 
 class MissingArgs(Exception):
@@ -140,7 +140,7 @@ def isunauthenticated(func):
 
 def print_list(objs, fields, formatters=None, sortby_index=0,
                mixed_case_fields=None, field_labels=None):
-    """Print a list or objects as a table, one row per object.
+    """Print a list of objects as a table, one row per object.
 
     :param objs: iterable of :class:`Resource`
     :param fields: attributes that correspond to columns, in order
