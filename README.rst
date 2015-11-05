@@ -1,20 +1,31 @@
-===============================
-ironic-oneviewd
-===============================
+# Ironic-OneViewd
 
-.. image:: https://img.shields.io/travis/sinvalmendes/ironic-oneviewd.svg
-        :target: https://travis-ci.org/sinvalmendes/ironic-oneviewd
+## Overview
 
-.. image:: https://img.shields.io/pypi/v/ironic-oneviewd.svg
-        :target: https://pypi.python.org/pypi/ironic-oneviewd
+The ironic-oneviewd is a Python daemon of the OneView Driver for Ironic. It handle nodes in Enroll
+and Manageable state to become Available.
+
+## Installation
+
+To install the ironic-oneviewd tool you can use the following command:
+
+```
+pip install ironic-oneviewd
+```
 
 
-Python daemon of the OneView driver for Ironic.
+## Configuration
 
-* Free software: ISC license
-* Documentation: https://ironic-oneviewd.readthedocs.org.
+The ironic-oneviewd automatically uses *~/ironic-oneview.conf* as default configuration file.
+It should contain the credentials that enable the connection with between the daemon, Ironic and OneView.
 
-Features
---------
+## Usage
 
-* TODO
+```
+ironic-oneviewd --config-file <path to your configuration file> manage-ironic-nodes
+```
+
+```
+ironic-oneviewd -c <path to your configuration file> manage-ironic-nodes
+```
+
