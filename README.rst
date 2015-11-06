@@ -28,9 +28,9 @@ Usage
 
 ::
 
-    ironic-oneviewd --config-file <path to your configuration file> manage-ironic-nodes
+    ironic-oneviewd --config-file <path to your configuration file>
 
 ::
 
-    ironic-oneviewd -c <path to your configuration file> manage-ironic-nodes
+    ironic-oneviewd -c <path to your configuration file>
 

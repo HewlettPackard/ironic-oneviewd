@@ -93,12 +93,12 @@ class OpenstackClient:
         ironic_client = self._get_ironic_client()
         ironic_client.node.set_provision_state(node.uuid, target_state)
 
-    def create_ironic_node_port(self, node_uuid, port_mac_address):
+    def create_ironic_node_port(self, node_uuid, port_mac):
         LOG.debug(
             'Creating port for node %(node_uuid)s', {'node_uuid': node_uuid}
         )
         ironic_client = self._get_ironic_client()
-        ironic_client.port.create(node_uuid=node_uuid, address=port_mac_address)
+        ironic_client.port.create(node_uuid=node_uuid, address=port_mac)
 
     def _is_flavor_available(self, server_hardware_info):
         LOG.info("Getting flavors from nova")
@@ -119,7 +119,6 @@ class OpenstackClient:
                     continue
                 return True
         return False
-
 
     def flavor_list(self):
         nova_client = self.get_nova_client()
