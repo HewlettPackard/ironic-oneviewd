@@ -16,17 +16,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
 import six
-import sys
-
-import common
-from ironic_oneviewd import facade
-
-from ironic_oneviewd import sync_exceptions
-from ironic_oneviewd.openstack.common._i18n import _
 
 from oslo_log import log as logging
+
+from ironic_oneviewd import facade
+from ironic_oneviewd import sync_exceptions
+from ironic_oneviewd.openstack.common._i18n import _
 
 LOG = logging.getLogger(__name__)
 
@@ -50,7 +46,7 @@ class NodeManager:
             if node.driver in self.supported_drivers:
                 try:
                     self.manage_node_provision_state(node)
-                except Exception as ex:
+                except Exception:
                     print('Something went wrong reading node info.')
 
     def manage_node_provision_state(self, node):
@@ -64,9 +60,9 @@ class NodeManager:
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
-        :param capabilities: the capabilities of the node as a formatted string.
-        :raises: InvalidParameterValue if capabilities is not an string or has a
-                 malformed value
+        :param capabilities: the node capabilities as a formatted string
+        :raises: InvalidParameterValue if capabilities is not an string or has
+                 a malformed value
         """
         capabilities_dict = {}
         if capabilities:
@@ -86,36 +82,43 @@ class NodeManager:
         return capabilities_dict
 
     def take_enroll_state_actions(self, node):
-        #TODO (sinval): temos de validar se node_capabilities, node...._uri existem
-        #TODO (sinval): validar se essas coisas sao None
+        # TODO (sinval): temos de validar se node_capabilities existem
+        # TODO (sinval): validar se essas coisas sao None
         node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
-        node_capabilities = self.capabilities_to_dict(node.properties.get('capabilities'))
-        node_server_profile_template_uri = node_capabilities.get('server_profile_template_uri')
-        server_hardware_dict = self.facade.get_server_hardware(node_server_hardware_uri)
+        node_capabilities = self.capabilities_to_dict(
+            node.properties.get('capabilities')
+        )
+        node_server_profile_template_uri = node_capabilities.get(
+            'server_profile_template_uri'
+        )
+        server_hardware_dict = self.facade.get_server_hardware(
+            node_server_hardware_uri
+        )
         sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
         if sh_server_profile_uri is not None:
-            LOG.error("The Server Hardware already has a Server Profile applied.")
+            LOG.error("The Server Hardware already has a "
+                      "Server Profile applied.")
         else:
-            self.apply_enroll_node_configuration(node_server_hardware_uri,
-                node_server_profile_template_uri, node.uuid)
+            self.apply_enroll_node_configuration(
+                node_server_hardware_uri,
+                node_server_profile_template_uri,
+                node.uuid
+            )
             self.facade.set_node_provision_state(node, 'manage')
 
-    def apply_enroll_node_configuration(self, server_hardware_uri, server_profile_template_uri, node_uuid):
+    def apply_enroll_node_configuration(self, server_hardware_uri,
+                                        server_profile_template_uri,
+                                        node_uuid):
         server_profile_name = "Ironic [%s]" % (node_uuid)
-        server_profile_applied_uri = self.facade.\
+        sp_applied_uri = self.facade.\
             generate_and_assign_server_profile_from_server_profile_template(
                 server_profile_template_uri, server_profile_name,
                 server_hardware_uri)
 
-        server_profile_dict = self.facade.get_server_profile(server_profile_applied_uri)
-        server_profile_mac_address = server_profile_dict.get('connections')[0].get('mac')
-        self.facade.create_node_port(node_uuid, server_profile_mac_address)
-        #TODO(sinval) config volumes (SAN storage)
-
+        sp_dict = self.facade.get_server_profile(sp_applied_uri)
+        server_profile_mac = sp_dict.get('connections')[0].get('mac')
+        self.facade.create_node_port(node_uuid, server_profile_mac)
+        # TODO(sinval) config volumes (SAN storage)
 
     def take_manageable_state_actions(self, node):
         self.facade.set_node_provision_state(node, 'provide')
-
-
-#if __name__ == '__main__':
-#    node_manager = NodeManager(None)

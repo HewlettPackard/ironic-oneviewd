@@ -16,11 +16,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
-from ironicclient.openstack.common import cliutils
 from ironic_oneviewd.config import ConfClient
-from ironic_oneviewd.commands.manage import NodeManager
+from ironic_oneviewd.node_manager.manage import NodeManager
 
 
 def do_manage_ironic_nodes(args):
