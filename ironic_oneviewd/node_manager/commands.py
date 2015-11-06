@@ -20,7 +20,7 @@ import sys
 
 from ironicclient.openstack.common import cliutils
 from ironic_oneviewd.config import ConfClient
-from ironic_oneviewd.manage import NodeManager
+from ironic_oneviewd.commands.manage import NodeManager
 
 
 def do_manage_ironic_nodes(args):

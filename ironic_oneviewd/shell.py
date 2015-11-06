@@ -29,13 +29,15 @@ from ironic_oneviewd.openstack.common import cliutils
 from ironic_oneviewd.openstack.common._i18n import _
 from oslo_utils import encodeutils
 
-from ironic_oneviewd.commands import commands as oneviewd_commands
+from ironic_oneviewd.node_manager import commands as oneviewd_commands
+from ironic_oneviewd.genconfig import commands as genconfig_commands
 
 
 VERSION = '1.0'
 
 COMMAND_MODULES = [
-    oneviewd_commands
+    oneviewd_commands,
+    genconfig_commands
 ]
 
 
@@ -98,7 +100,7 @@ class IronicOneView(object):
             return 0
 
         args = subcommand_parser.parse_args(argv)
-        # Short-circuit and deal with these commands right away.
+        # Short-circuit and deal with these node_manager right away.
         if args.func == self.do_help:
             self.do_help(args)
             return 0
@@ -128,7 +130,8 @@ def define_command(subparsers, command, callback, cmd_mapper):
 
 
 def define_commands_from_module(subparsers, command_module, cmd_mapper):
-    """Add *do_* methods in a module and add as commands into a subparsers."""
+    """Add *do_* methods in a module and add as node_manager into a subparsers.
+    """
     for method_name in (a for a in dir(command_module) if a.startswith('do_')):
         # Commands should be hypen-separated instead of underscores.
         command = method_name[3:].replace('_', '-')
