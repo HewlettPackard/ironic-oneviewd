@@ -94,7 +94,9 @@ class OpenstackClient:
         ironic_client.node.set_provision_state(node.uuid, target_state)
 
     def create_ironic_node_port(self, node_uuid, port_mac_address):
-        LOG.debug('Creating port for node %(node_uuid)s', {'node_uuid': node_uuid})
+        LOG.debug(
+            'Creating port for node %(node_uuid)s', {'node_uuid': node_uuid}
+        )
         ironic_client = self._get_ironic_client()
         ironic_client.port.create(node_uuid=node_uuid, address=port_mac_address)
 
