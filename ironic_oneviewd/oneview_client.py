@@ -23,7 +23,6 @@ import requests
 from requests.packages import urllib3
 from oslo_log import log as logging
 
-from ironic_oneviewd.config import ConfClient as ConfigClient
 from ironic_oneviewd import oneview_uri
 from ironic_oneviewd.openstack.common._i18n import _LE
 from ironic_oneviewd.openstack.common._i18n import _LI
@@ -65,22 +64,23 @@ class OneViewRequestAPI:
         self.allow_insecure_connections = allow_insecure_connections
         self.max_retries = 50
 
-    def _wait_task_completes_returning_status(self, task_uri, max_waiting_time=10):
-        def _check_task_status(task_uri):
-            task = self.prepare_and_do_request(uri=task_uri)
-            if task['associatedResource']['resourceUri'] is not None:
-                return TASK_STATUS_OK
-            elif len(task['taskErrors']) > 0:
-                return TASK_STATUS_ERROR
-            return TASK_STATUS_WAITING
-
-        slept_time = 0
-        while _check_task_status(task_uri) == TASK_STATUS_WAITING and\
-            slept_time <= max_waiting_time:
-            time.sleep(1)
-            slept_time += 1
-
-        return self.prepare_and_do_request(uri=task_uri)
+#    def _wait_task_completes_returning_status(
+#         self, task_uri, max_waiting_time=10):
+#        def _check_task_status(task_uri):
+#            task = self.prepare_and_do_request(uri=task_uri)
+#            if task['associatedResource']['resourceUri'] is not None:
+#                return TASK_STATUS_OK
+#            elif len(task['taskErrors']) > 0:
+#                return TASK_STATUS_ERROR
+#            return TASK_STATUS_WAITING
+#
+#        slept_time = 0
+#        while _check_task_status(task_uri) == TASK_STATUS_WAITING and\
+#            slept_time <= max_waiting_time:
+#            time.sleep(1)
+#            slept_time += 1
+#
+#        return self.prepare_and_do_request(uri=task_uri)
 
     def _get_verify_connection_option(self):
         verify_status = False
@@ -109,7 +109,9 @@ class OneViewRequestAPI:
                 "Can't connect to OneView: %s" % str(ex.message))
 
     def _new_token(self):
-        LOG.info(_LI("Using OneView credentials specified in configuration file"))
+        LOG.info(
+            _LI("Using OneView credentials specified in configuration file")
+        )
         url = '%s%s' % (self.manager_url,
                         oneview_uri.AUTHENTICATION_URL)
         body = {
@@ -203,17 +205,17 @@ class OneViewServerHardwareAPI(OneViewRequestAPI):
         server_hardware_json = self.get_server_hardware(server_hardware_uri)
         return server_hardware_json.get('serverProfileUri')
 
-    def get_node_power_state(self, server_hardware_uri):
-        power_state = self.prepare_and_do_request(
-            uri=server_hardware_uri, request_type='GET').get('powerState')
-        if power_state == 'On' or power_state == 'PoweringOff':
-            return states.POWER_ON
-        elif power_state == 'Off' or power_state == 'PoweringOn':
-            return states.POWER_OFF
-        elif power_state == 'Resetting':
-            return states.REBOOT
-        else:
-            return states.ERROR
+#    def get_node_power_state(self, server_hardware_uri):
+#        power_state = self.prepare_and_do_request(
+#            uri=server_hardware_uri, request_type='GET').get('powerState')
+#        if power_state == 'On' or power_state == 'PoweringOff':
+#            return states.POWER_ON
+#        elif power_state == 'Off' or power_state == 'PoweringOn':
+#            return states.POWER_OFF
+#        elif power_state == 'Resetting':
+#            return states.REBOOT
+#        else:
+#            return states.ERROR
 
     def parse_server_hardware_to_dict(self, server_hardware):
         port_map = server_hardware.get('portMap')
@@ -246,7 +248,9 @@ class OneViewServerProfileTemplateAPI(OneViewRequestAPI):
         new_server_profile = self.prepare_and_do_request(
             uri=server_profile_template_uri + "/new-profile")
         new_server_profile['name'] = server_profile_name
-        new_server_profile['serverHardwareUri'] = server_profile_server_hardware_uri
+        new_server_profile['serverHardwareUri'] = (
+            server_profile_server_hardware_uri
+        )
         return new_server_profile
 
 
@@ -305,69 +309,70 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
 
         return server_profile_template_json
 
-    def _build_clone_body(self, server_profile_dict, server_hardware_dict,
-                          server_profile_name):
-        server_profile_dict['name'] = server_profile_name
-        server_profile_dict['serverHardwareUri'] = server_hardware_dict['uri']
-
-        delete_volume_fields = ['state', 'status']
-        delete_fields = ['uuid', 'modified', 'taskUri', 'eTag', 'created',
-                         'serialNumber', 'inProgress', 'category', 'state',
-                         'enclosureUri', 'associatedServer', 'status',
-                         'enclosureBay', 'uri']
-
-        add_volume_fields = []
-
-        volumeAttachments = (
-            server_profile_dict["sanStorage"]["volumeAttachments"])
-        for storage_information in volumeAttachments:
-            volume_data = (
-                get_volume_information(storage_information["volumeUri"]))
-            volume_fields = {
-                "volumeProvisionType": volume_data["provisionType"],
-                "volumeProvisionedCapacityBytes":
-                    volume_data["provisionedCapacity"],
-                "volumeShareable": volume_data["shareable"],
-                "volumeName": volume_data["deviceVolumeName"] + "-02",
-                "permanent": volume_data["isPermanent"],
-                "volumeUri": None,
-                "lun": None
-            }
-            add_volume_fields.append(volume_fields)
-
-        len_vol_att = len(server_profile_dict["sanStorage"]["volumeAttachments"])
-        for i in range(len_vol_att):
-            volume_dict = server_profile_dict["sanStorage"]["volumeAttachments"][i]
-            volume_dict.update(add_volume_fields[i])
-
-        for i in delete_fields:
-            del server_profile_dict[i]
-
-        for j in range(len_vol_att):
-            for i in delete_volume_fields:
-                del server_profile_dict["sanStorage"]["volumeAttachments"][j][i]
-
-        for j in range(len_vol_att):
-            volume = server_profile_dict["sanStorage"]["volumeAttachments"][j]
-            storage_paths = volume["storagePaths"]
-            for i in range(len(storage_paths)):
-                del storage_paths[i]["status"]
-
-        connections_fields = ['id', 'name', 'functionType', 'portId',
-                              'requestedMbps', 'networkUri', 'boot']
-        fields_to_delete = []
-
-        for j in range(len(server_profile_dict['connections'])):
-            for i in server_profile_dict['connections'][j]:
-                if not (i in connections_fields):
-                    if not (i in fields_to_delete):
-                        fields_to_delete.append(i)
-
-        for j in range(len(server_profile_dict['connections'])):
-            for i in fields_to_delete:
-                del server_profile_dict['connections'][j][i]
-
-        return server_profile_dict
+#    def _build_clone_body(self, server_profile_dict, server_hardware_dict,
+#                          server_profile_name):
+#        server_profile_dict['name'] = server_profile_name
+#        server_profile_dict['serverHardwareUri'] = server_hardware_dict['uri']
+#
+#        delete_volume_fields = ['state', 'status']
+#        delete_fields = ['uuid', 'modified', 'taskUri', 'eTag', 'created',
+#                         'serialNumber', 'inProgress', 'category', 'state',
+#                         'enclosureUri', 'associatedServer', 'status',
+#                         'enclosureBay', 'uri']
+#
+#        add_volume_fields = []
+#
+#        san_storage = server_profile_dict["sanStorage"]
+#        volume_attachments = san_storage["volumeAttachments"]
+#
+#        for storage_information in volume_attachments:
+#            volume_data = (
+#                get_volume_information(storage_information["volumeUri"]))
+#            volume_fields = {
+#                "volumeProvisionType": volume_data["provisionType"],
+#                "volumeProvisionedCapacityBytes":
+#                    volume_data["provisionedCapacity"],
+#                "volumeShareable": volume_data["shareable"],
+#                "volumeName": volume_data["deviceVolumeName"] + "-02",
+#                "permanent": volume_data["isPermanent"],
+#                "volumeUri": None,
+#                "lun": None
+#            }
+#            add_volume_fields.append(volume_fields)
+#
+#        len_vol_att = len(volume_attachments)
+#        for i in range(len_vol_att):
+#            volume_dict = volume_attachments[i]
+#            volume_dict.update(add_volume_fields[i])
+#
+#        for i in delete_fields:
+#            del server_profile_dict[i]
+#
+#        for j in range(len_vol_att):
+#            for i in delete_volume_fields:
+#                del volume_attachments[j][i]
+#
+#        for j in range(len_vol_att):
+#            volume = volume_attachments[j]
+#            storage_paths = volume["storagePaths"]
+#            for i in range(len(storage_paths)):
+#                del storage_paths[i]["status"]
+#
+#        connections_fields = ['id', 'name', 'functionType', 'portId',
+#                              'requestedMbps', 'networkUri', 'boot']
+#        fields_to_delete = []
+#
+#        for j in range(len(server_profile_dict['connections'])):
+#            for i in server_profile_dict['connections'][j]:
+#                if not (i in connections_fields):
+#                    if not (i in fields_to_delete):
+#                        fields_to_delete.append(i)
+#
+#        for j in range(len(server_profile_dict['connections'])):
+#            for i in fields_to_delete:
+#                del server_profile_dict['connections'][j][i]
+#
+#        return server_profile_dict
 
     def clone_and_assign(self, server_hardware_uri,
                          server_profile_template_uri, node_uuid):
