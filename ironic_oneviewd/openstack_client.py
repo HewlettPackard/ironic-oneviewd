@@ -19,9 +19,9 @@
 from ironicclient import client as ironic_client
 from novaclient import client as nova_client
 
-from ironic_oneview_cli.config import ConfClient
-from ironic_oneview_cli.oneview_client import OneViewServerHardwareAPI
-from ironic_oneview_cli import service_logging as logging
+from ironic_oneviewd.config import ConfClient
+from ironic_oneviewd.oneview_client import OneViewServerHardwareAPI
+from ironic_oneviewd import service_logging as logging
 
 
 LOG = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def get_ironic_client(conf):
     kwargs = {
         'os_username': conf.ironic.admin_user,
         'os_password': conf.ironic.admin_password,
-        'os_auth_url': conf.ironic.auth_uri,
+        'os_auth_url': conf.ironic.auth_url,
         'os_tenant_name': conf.ironic.admin_tenant_name,
         'os_ironic_api_version': IRONIC_API_VERSION,
     }

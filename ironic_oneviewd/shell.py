@@ -25,8 +25,8 @@ import argparse
 import sys
 import six
 
-from ironicclient.openstack.common import cliutils
-from ironicclient.openstack.common._i18n import _
+from ironic_oneviewd.openstack.common import cliutils
+from ironic_oneviewd.openstack.common._i18n import _
 from oslo_utils import encodeutils
 
 from ironic_oneviewd.commands import commands as oneviewd_commands
@@ -93,8 +93,8 @@ class IronicOneView(object):
         subcommand_parser = self.get_subcommand_parser(1)
         self.parser = subcommand_parser
 
-        if options.help or not argv:
-            self.do_help(options)
+        if not argv:
+            oneviewd_commands.do_manage_ironic_nodes(options)
             return 0
 
         args = subcommand_parser.parse_args(argv)

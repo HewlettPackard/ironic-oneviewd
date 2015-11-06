@@ -21,11 +21,10 @@ import six
 import sys
 
 import common
-import config_client
 from ironic_oneviewd import facade
 
-from ironic.common import exception
-from ironic.common.i18n import _
+from ironic_oneviewd import sync_exceptions
+from ironic_oneviewd.openstack.common._i18n import _
 
 from oslo_log import log as logging
 
@@ -52,11 +51,13 @@ class NodeManager:
                 try:
                     self.manage_node_provision_state(node)
                 except Exception as ex:
-                    print 'Something went wrong reading node info.'
+                    print('Something went wrong reading node info.')
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state
-        if provision_state == ENROLL_PROVISION_STATE:
+        if node.maintenance:
+            return
+        elif provision_state == ENROLL_PROVISION_STATE:
             self.take_enroll_state_actions(node)
         elif provision_state == MANAGEABLE_PROVISION_STATE:
             self.take_manageable_state_actions(node)
@@ -70,7 +71,7 @@ class NodeManager:
         capabilities_dict = {}
         if capabilities:
             if not isinstance(capabilities, six.string_types):
-                raise exception.InvalidParameterValue(
+                raise sync_exceptions.InvalidParameterValue(
                     _("Value of 'capabilities' must be string. Got %s")
                     % type(capabilities))
             try:
@@ -78,7 +79,7 @@ class NodeManager:
                     key, value = capability.split(':')
                     capabilities_dict[key] = value
             except ValueError:
-                raise exception.InvalidParameterValue(
+                raise sync_exceptions.InvalidParameterValue(
                     _("Malformed capabilities value: %s") % capability
                 )
 

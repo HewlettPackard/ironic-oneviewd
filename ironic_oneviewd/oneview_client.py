@@ -23,7 +23,7 @@ import requests
 from requests.packages import urllib3
 from oslo_log import log as logging
 
-from ironic_oneviewd.config import ConfigClient
+from ironic_oneviewd.config import ConfClient as ConfigClient
 from ironic_oneviewd import oneview_uri
 from ironic_oneviewd.openstack.common._i18n import _LE
 from ironic_oneviewd.openstack.common._i18n import _LI
