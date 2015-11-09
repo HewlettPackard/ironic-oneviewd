@@ -20,7 +20,7 @@ import mock
 import requests
 import unittest
 
-import manage_ironic_nodes
+import ironic_oneviewd.node_manager.manage
 import service_manager
 
 from config_client import OneViewConfClient as oneview_conf

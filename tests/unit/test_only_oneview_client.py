@@ -16,7 +16,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import unittest
-from oneview_client import OneViewServerProfileTemplateAPI
+from ironic_oneviewd.oneview_client import OneViewServerProfileTemplateAPI
 from oneview_client import OneViewServerHardwareAPI
 from oneview_client import OneViewServerProfileAPI
 
