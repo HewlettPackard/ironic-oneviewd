@@ -28,7 +28,8 @@ Configuring the service
 =======================
 
 The ironic-oneviewd uses a configuration file to get Ironic and OneView
-credentials and addresses. To configure such file acordingly, run::
+credentials and addresses. To generate and configure such file accordingly,
+run::
 
     ironic-oneviewd genconfig
 
@@ -36,10 +37,43 @@ This tool asks you for such information and creates a *~/ironic-oneview.conf*
 configuration file located at your home directory by default, or other
 location of your choice.
 
+If you prefer to create your own configuration file, it should look like this::
+
+    [ironic]
+    admin_user=<your admin user name>
+    admin_password=<your admin password>
+    admin_tenant_name=<your admin tenant name>
+    auth_url=<your Ironic authentication url>
+    insecure=<true,false>
+    default_deploy_kernel_id=<your deploy kernel uuid>
+    default_deploy_ramdisk_id=<your deploy ramdisk uuid>
+    default_driver=<iscsi_pxe_oneview,agent_pxe_oneview>
+
+    [nova]
+    auth_url=<your Nova authentication url>
+    username=<your admin username>
+    password=<your admin password>
+    tenant_name=<your tenant name>
+    insecure=<true,false>
+
+    [oneview]
+    manager_url=<your OneView appliance url>
+    username=<your OneView username>
+    password=<your OneView password>
+    allow_insecure_connections=<true,false>
+    tls_cacert_file=<path to your CA certfile, if any>
+
 Usage
 =====
 
-To run ironic-oneviewd, do::
+If your *~/ironic-oneview.conf* configuration file is in your home directory,
+the service will automatically use this conf. In this case, to run
+ironic-oneviewd, do::
+
+    ironic-oneviewd
+
+If you chose to place this file in a different location, you should pass it
+when starting the service::
 
     ironic-oneviewd --config-file <path to your configuration file>
 
@@ -47,8 +81,9 @@ or::
 
     ironic-oneviewd -c <path to your configuration file>
 
-Note that in order to run this daemon you only have pass the configuration
-file previously created containing the required credentials and addresses.
+Note that, in order to run this daemon, you only have to pass the
+configuration file previously created containing the required credentials
+and addresses.
 
 References
 ==========
