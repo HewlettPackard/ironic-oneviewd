@@ -68,4 +68,3 @@ class OneViewServerProfileAssociatedError(Exception):
 class OneViewErrorStateSettingPowerState(Exception):
     message = _("Get Error State in OneView trying to set power state of "
                 "Server Hardware")
-

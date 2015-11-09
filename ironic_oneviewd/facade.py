@@ -17,7 +17,6 @@
 #    under the License.
 
 from ironic_oneviewd.oneview_client import get_oneview_client
-from ironic_oneviewd.openstack_client import OpenstackClient
 from ironic_oneviewd.openstack_client import get_ironic_client
 from ironic_oneviewd.openstack_client import get_nova_client
 
@@ -32,9 +31,6 @@ class Facade(object):
     # =========================================================================
     # Ironic actions
     # =========================================================================
-    def update_ironic_node_state(self, node, server_hardware_uri):
-        return os_client._update_ironic_node_state(node, server_hardware_uri)
-
     def get_ironic_node_list(self):
         return self.ironicclient.node.list(detail=True)
 
@@ -46,7 +42,7 @@ class Facade(object):
             node_uuid,
             maintenance_mode,
             maint_reason=maint_reason
-    )
+        )
 
     def create_ironic_node(self, **attrs):
         return self.ironicclient.node.create(**attrs)
@@ -58,15 +54,6 @@ class Facade(object):
         return self.ironicclient.port.create(node_uuid=node_uuid,
                                              address=port_mac_address)
 
-    # =========================================================================
-    # Nova actions
-    # =========================================================================
-
-    def get_nova_client(self):
-        return os_client.get_nova_client()
-
-    def is_nova_flavor_available(self, server_hardware_info):
-        return os_client._is_flavor_available(server_hardware_info)
     # =========================================================================
     # OneView actions
     # =========================================================================
@@ -97,9 +84,9 @@ class Facade(object):
         return self.oneviewclient.server_profile.get_server_profile_template(
             server_profile_uri)
 
-    def generate_and_assign_server_profile_from_server_profile_template(self,
-            server_profile_template_uri, server_profile_name,
-            server_profile_server_hardware_uri):
+    def generate_and_assign_server_profile_from_server_profile_template(
+        self, server_profile_template_uri, server_profile_name,
+        server_profile_server_hardware_uri):
         return self.oneviewclient.server_profile.generate_and_assign_server_profile_from_server_profile_template(
             server_profile_template_uri, server_profile_name,
             server_profile_server_hardware_uri)
@@ -112,4 +99,3 @@ class Facade(object):
 
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
         return self.oneviewclient.server_profile.unassign_server_profile(server_hardware_uri, server_profile_uri)
-

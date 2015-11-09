@@ -16,8 +16,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
-
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import sync_exceptions
 import oneview_client
