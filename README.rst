@@ -33,7 +33,7 @@ run::
 
     ironic-oneviewd genconfig
 
-This tool asks you for such information and creates a *~/ironic-oneview.conf*
+This tool asks you for such information and creates a *~/ironic-oneviewd.conf*
 configuration file located at your home directory by default, or other
 location of your choice.
 
@@ -49,13 +49,6 @@ If you prefer to create your own configuration file, it should look like this::
     default_deploy_ramdisk_id=<your deploy ramdisk uuid>
     default_driver=<iscsi_pxe_oneview,agent_pxe_oneview>
 
-    [nova]
-    auth_url=<your Nova authentication url>
-    username=<your admin username>
-    password=<your admin password>
-    tenant_name=<your tenant name>
-    insecure=<true,false>
-
     [oneview]
     manager_url=<your OneView appliance url>
     username=<your OneView username>
@@ -66,7 +59,7 @@ If you prefer to create your own configuration file, it should look like this::
 Usage
 =====
 
-If your *~/ironic-oneview.conf* configuration file is in your home directory,
+If your *~/ironic-oneviewd.conf* configuration file is in your home directory,
 the service will automatically use this conf. In this case, to run
 ironic-oneviewd, do::
 

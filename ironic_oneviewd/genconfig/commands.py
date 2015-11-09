@@ -41,41 +41,10 @@ def do_genconfig(args):
     default_deploy_ramdisk = raw_input("Type in the default deploy ramdisk "
                                        "image ID on Glance: ")
 
-# #     defaults = {
-# #         "ironic":{
-# #             "auth_uri": ironic_auth_uri,
-# #             "admin_user": ironic_username,
-# #             "admin_tenant": ironic_tenant,
-# #             "admin_password": ironic_password,
-# #             "insecure": ironic_insecure,
-# #         }
-# #     }
-#     conf = ConfClient('', defaults)
-#     facade = Facade(conf)
-#     enabled_drivers = facade.get_drivers()
     # TODO(thiagop): get drivers enabled with ironicclient
     enabled_drivers = ['agent_pxe_oneview', 'iscsi_pxe_oneview']
     ironic_default_driver = raw_input(("Which driver would you like to use? "
                                        "[%s]: ") % ','.join(enabled_drivers))
-
-    option = raw_input("Would you like to configure different credentials for"
-                       " nova? [y/N]: ")
-    option = True if option.lower() == 'y' else False
-    if option:
-        print("========= Nova ========= ")
-        nova_auth_url = raw_input("Type the auth_url for the Nova service: ")
-        nova_username = raw_input("Type your Nova username: ")
-        nova_tenant = raw_input("Type your Nova user's tenant name: ")
-        nova_password = getpass.getpass("Type your Nova user's password: ")
-        nova_insecure = raw_input("Would you like the connections with Nova "
-                                  "to be insecure? [y/N]: ") or "N"
-        nova_insecure = True if nova_insecure.lower() == 'y' else False
-    else:
-        nova_auth_url = ironic_auth_url
-        nova_username = ironic_username
-        nova_tenant = ironic_tenant
-        nova_password = ironic_password
-        nova_insecure = ironic_insecure
 
     print("========= OneView ========= ")
     oneview_manager_url = raw_input("Type in the OneView uri: ")
@@ -95,12 +64,6 @@ def do_genconfig(args):
     config.set("ironic", "default_deploy_kernel_id", default_deploy_kernel)
     config.set("ironic", "default_deploy_ramdisk_id", default_deploy_ramdisk)
     config.set("ironic", "default_driver", ironic_default_driver)
-    config.add_section("nova")
-    config.set("nova", "auth_url", nova_auth_url)
-    config.set("nova", "username", nova_username)
-    config.set("nova", "tenant_name", nova_tenant)
-    config.set("nova", "password", nova_password)
-    config.set("nova", "insecure", nova_insecure)
     config.add_section("oneview")
     config.set("oneview", "manager_url", oneview_manager_url)
     config.set("oneview", "username", oneview_username)
