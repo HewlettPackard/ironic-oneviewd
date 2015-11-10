@@ -20,66 +20,21 @@ from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import sync_exceptions
 import oneview_client
 
+
 REQUIRED_ON_PROPERTIES = {
     'server_hardware_type_uri': _("Server Hardware Type URI Required."),
     'server_profile_template_uri': _("Server Profile Template URI required"),
 }
 
-# REQUIRED_ON_INSTANCE_INFO = {
-#    'server_profile_template_uri': _("Server Profile Template URI to clone "
-#                                     "from. Required."),
-# }
-
 REQUIRED_ON_EXTRAS = {
     'server_hardware_uri': _("Server Hardware URI. Required."),
 }
-
-# OPTIONAL_ON_PROPERTIES = {
-#    'enclosure_group_uri': _("Enclosure Group URI.")
-# }
-
-# COMMON_PROPERTIES = {}
-# COMMON_PROPERTIES.update(REQUIRED_ON_PROPERTIES)
-# COMMON_PROPERTIES.update(REQUIRED_ON_EXTRAS)
-# COMMON_PROPERTIES.update(OPTIONAL_ON_PROPERTIES)
 
 
 def node_has_server_profile(driver_info):
     server_hardware = oneview_client.get_server_hardware(driver_info)
     server_profile_uri = server_hardware.get("serverProfileUri")
     return server_profile_uri is not None
-
-
-# def parse_driver_info(node):
-#    properties = _verify_node_properties(node)
-#    extra = _verify_node_extra(node)
-
-#    instance_info = node.instance_info.get('capabilities', '')
-#    try:
-#        instance_info_dict = json.loads(instance_info)
-#        server_profile_template_uri = instance_info_dict.get(
-#            "server_profile_template_uri"
-#        )
-#        server_profile_template_uri = server_profile_template_uri.replace(
-#            "s!=", ""
-#        )
-#        server_profile_template_uri = server_profile_template_uri.strip()
-#    except ValueError:
-#        server_profile_template_uri = ''
-
-#    properties_dict = _capabilities_to_dict(properties)
-
-#    driver_info = {
-#        'server_hardware_uri':
-#            extra.get("server_hardware_uri"),
-#        'server_hardware_type_uri':
-#            properties_dict.get('server_hardware_type_uri', None),
-#        'enclosure_group_uri':
-#            properties_dict.get('enclosure_group_uri', None),
-#        'server_profile_template_uri': server_profile_template_uri,
-#    }
-
-#    return driver_info
 
 
 def verify_node_properties(node):

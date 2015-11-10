@@ -41,7 +41,7 @@ COMMAND_MODULES = [
 ]
 
 
-class IronicOneView(object):
+class IronicOneViewD(object):
 
     def get_base_parser(self):
         parser = argparse.ArgumentParser(
@@ -153,7 +153,7 @@ class HelpFormatter(argparse.HelpFormatter):
 
 def main():
     try:
-        IronicOneView().main(sys.argv[1:])
+        IronicOneViewD().main(sys.argv[1:])
     except KeyboardInterrupt:
         print("\nironic-oneviewd stopped", file=sys.stderr)
         sys.exit(130)
