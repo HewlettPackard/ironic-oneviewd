@@ -16,48 +16,55 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ironic.common import exception
-from ironic.common.i18n import _
+from ironic_oneviewd.openstack.common._i18n import _
+
+
+class InvalidParameterValue(Exception):
+    pass
+
+
+class MissingParameterValue(Exception):
+    pass
 
 
 class OneViewConnectionError(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
 
-class OneViewNotAuthorizedException(exception.IronicException):
+class OneViewNotAuthorizedException(Exception):
     message = _("Unauthorized access to OneView. Check credentials in"
                 " ironic.conf.")
 
 
-class OneViewResourceNotFoundError(exception.IronicException):
+class OneViewResourceNotFoundError(Exception):
     message = _("Resource not Found in OneView")
 
 
-class OneViewServerProfileTemplateError(exception.IronicException):
+class OneViewServerProfileTemplateError(Exception):
     message = _("Server Profile Template not found into driver_info")
 
 
-class OneViewServerProfileCloneError(exception.IronicException):
+class OneViewServerProfileCloneError(Exception):
     message = _("Error cloning server profile")
 
 
-class OneViewMaxRetriesExceededError(exception.IronicException):
+class OneViewMaxRetriesExceededError(Exception):
     message = _("Max connection retries to OneView exceeded")
 
 
-class OneViewBootDeviceInvalidError(exception.IronicException):
+class OneViewBootDeviceInvalidError(Exception):
     message = _("The device is not valid to setup the boot order")
 
 
-class OneViewServerProfileAssociatedError(exception.IronicException):
+class OneViewServerProfileAssociatedError(Exception):
     message = _("There is no Server Profile associated to this Server"
                 " Hardware")
 
 
-class OneViewErrorStateSettingPowerState(exception.IronicException):
+class OneViewErrorStateSettingPowerState(Exception):
     message = _("Get Error State in OneView trying to set power state of "
                 "Server Hardware")
-
