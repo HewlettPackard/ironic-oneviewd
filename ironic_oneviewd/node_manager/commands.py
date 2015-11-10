@@ -27,7 +27,7 @@ def do_manage_ironic_nodes(args):
     """Show a list of OneView servers to be created as nodes in Ironic
     """
     if args.config_file is not "":
-        config_file = args.config_file
+        config_file = os.path.realpath(os.path.expanduser(args.config_file))
 
     defaults = {
         "ca_file": "",
