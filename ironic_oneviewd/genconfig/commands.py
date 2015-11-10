@@ -57,7 +57,7 @@ def do_genconfig(args):
     config = ConfigParser()
     config.add_section("ironic")
     config.set("ironic", "auth_url", ironic_auth_url)
-    config.set("ironic", "admin_username", ironic_username)
+    config.set("ironic", "admin_user", ironic_username)
     config.set("ironic", "admin_tenant_name", ironic_tenant)
     config.set("ironic", "admin_password", ironic_password)
     config.set("ironic", "insecure", ironic_insecure)
