@@ -16,12 +16,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from configparser import ConfigParser
 import getpass
 import os
 
-# from ironic_oneview_cli.config import ConfClient
-# from ironic_oneview_cli.facade import Facade
+from builtins import input
+from configparser import ConfigParser
 
 
 def do_genconfig(args):

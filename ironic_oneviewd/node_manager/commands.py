@@ -18,6 +18,8 @@
 
 import os
 
+from builtins import input
+
 from ironic_oneviewd.config import ConfClient
 from ironic_oneviewd.genconfig.commands import do_genconfig
 from ironic_oneviewd.node_manager.manage import NodeManager
