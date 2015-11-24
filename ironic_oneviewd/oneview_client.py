@@ -62,7 +62,7 @@ class OneViewRequestAPI:
         self.password = password
         self.tls_cacert_file = tls_cacert_file
         self.allow_insecure_connections = allow_insecure_connections
-        self.max_retries = 50
+        self.max_retries = 100
 
     def _get_verify_connection_option(self):
         verify_status = False
@@ -239,7 +239,7 @@ class OneViewServerProfileAPI(OneViewRequestAPI):
         task = self.prepare_and_do_request(uri=task_uri)
         while task['taskState'] != 'Completed' and retries < max_retries:
             retries += 1
-            time.sleep(5)
+            time.sleep(10)
             task = self.prepare_and_do_request(uri=task_uri)
         if task['taskState'] != 'Completed':
             raise exception.OneViewMaxRetriesExceededError(
