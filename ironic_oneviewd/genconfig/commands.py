@@ -27,6 +27,10 @@ def do_genconfig(args):
     """Generates the config file according to user input
 
     """
+    print("========= DEFAULT ========")
+    default_retry_interval = input("Type the retry interval for daemon manage the nodes, e.g. (0h0m10s): ")
+    retry_interval = default_retry_interval if default_retry_interval else "10s"
+
     print("========= Ironic ========= ")
     ironic_auth_url = input("Type the auth_url for the Ironic service: ")
     ironic_username = input("Type your Ironic username: ")
@@ -54,8 +58,7 @@ def do_genconfig(args):
     allow_insecure = 'True' if allow_insecure.lower() == 'y' else 'False'
 
     config = ConfigParser()
-    config.add_section("DEFAULT")
-    config.set("DEFAULT", "retry_interval", 10s)
+    config.set("DEFAULT", "retry_interval", retry_interval)
     config.add_section("ironic")
     config.set("ironic", "auth_url", ironic_auth_url)
     config.set("ironic", "admin_user", ironic_username)
