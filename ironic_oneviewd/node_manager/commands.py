@@ -19,10 +19,12 @@
 import os
 
 from builtins import input
+import retrying
 
 from ironic_oneviewd.config import ConfClient
 from ironic_oneviewd.genconfig.commands import do_genconfig
 from ironic_oneviewd.node_manager.manage import NodeManager
+from ironic_oneviewd.timestring import to_seconds
 
 
 def do_manage_ironic_nodes(args):
@@ -52,5 +54,11 @@ def do_manage_ironic_nodes(args):
 
     conf = ConfClient(config_file, defaults)
     node_manager = NodeManager(conf)
-    while True:
+
+    wait_fixed = to_seconds(conf.DEFAULT.retry_interval) * 1000
+
+    @retrying.retry(wait_fixed=wait_fixed)
+    def execute():
         node_manager.pull_ironic_nodes()
+        raise Exception("Continue trying...") 
+    execute()

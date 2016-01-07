@@ -54,6 +54,8 @@ def do_genconfig(args):
     allow_insecure = 'True' if allow_insecure.lower() == 'y' else 'False'
 
     config = ConfigParser()
+    config.add_section("DEFAULT")
+    config.set("DEFAULT", "retry_interval", 10s)
     config.add_section("ironic")
     config.set("ironic", "auth_url", ironic_auth_url)
     config.set("ironic", "admin_user", ironic_username)
