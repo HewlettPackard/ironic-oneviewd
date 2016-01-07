@@ -57,6 +57,16 @@ def do_genconfig(args):
                            "to be insecure? [y/N]: ") or "N"
     allow_insecure = 'True' if allow_insecure.lower() == 'y' else 'False'
 
+    print("=========== Nova ===========")
+    nova_auth_url = input("Type the auth_url for the Nova service: ")
+    nova_username = input("Type your Nova username: ")
+    nova_tenant = input("Type your Nova user's tenant name: ")
+    nova_password = getpass.getpass("Type your Nova user's password: ")
+    nova_insecure = input("Would you like the connections with Nova to"
+                            " be insecure? [y/N]: ") or "N"
+    nova_insecure = 'True' if nova_insecure.lower() == 'y' else 'False'
+
+
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
     config.add_section("ironic")
@@ -73,6 +83,12 @@ def do_genconfig(args):
     config.set("oneview", "username", oneview_username)
     config.set("oneview", "password", oneview_password)
     config.set("oneview", "allow_insecure_connections", allow_insecure)
+    config.add_section("nova")
+    config.set("nova", "auth_url", nova_auth_url)
+    config.set("nova", "username", nova_username)
+    config.set("nova", "tenant_name", nova_tenant)
+    config.set("nova", "password", nova_password)
+    config.set("nova", "insecure", nova_insecure)
 
     filename = input("Type the path to the new configuration file [%s]: "
                      % args.config_file) or args.config_file

@@ -40,7 +40,7 @@ location of your choice.
 If you prefer to create your own configuration file, it should look like this::
 
     [DEFAULT]
-    retry_interval = <hours>h<minutes>m<seconds>s
+    retry_interval=<hours>h<minutes>m<seconds>s
 
     [ironic]
     admin_user=<your admin user name>
@@ -58,6 +58,13 @@ If you prefer to create your own configuration file, it should look like this::
     password=<your OneView password>
     allow_insecure_connections=<true,false>
     tls_cacert_file=<path to your CA certfile, if any>
+
+    [nova]
+    auth_url=<your nova authentication url>
+    username=<your admin user name>
+    tenant_name=<your admin tenant name>
+    password=<your admin password>
+    insecure=<true, false>
 
 Usage
 =====
