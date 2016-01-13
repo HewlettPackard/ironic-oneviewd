@@ -31,14 +31,14 @@ def do_genconfig(args):
     default_retry_interval = input("Type the retry interval for daemon manage the nodes, e.g. (0h0m10s): ")
     retry_interval = default_retry_interval if default_retry_interval else "10s"
 
-    print("========= Ironic ========= ")
-    ironic_auth_url = input("Type the auth_url for the Ironic service: ")
-    ironic_username = input("Type your Ironic username: ")
-    ironic_tenant = input("Type your Ironic user's tenant name: ")
-    ironic_password = getpass.getpass("Type your Ironic user's password: ")
-    ironic_insecure = input("Would you like the connections with Ironic to"
+    print("========= Openstack ========= ")
+    openstack_auth_url = input("Type the auth_url for the Ironic service: ")
+    openstack_username = input("Type your Openstack username: ")
+    openstack_tenant = input("Type your Openstack user's tenant name: ")
+    openstack_password = getpass.getpass("Type your Openstack user's password: ")
+    openstack_insecure = input("Would you like the connections with Openstack to"
                             " be insecure? [y/N]: ") or "N"
-    ironic_insecure = 'True' if ironic_insecure.lower() == 'y' else 'False'
+    openstack_insecure = 'True' if openstack_insecure.lower() == 'y' else 'False'
     default_deploy_kernel = input("Type in the default deploy keynel image"
                                   " ID on Glance: ")
     default_deploy_ramdisk = input("Type in the default deploy ramdisk "
@@ -59,15 +59,15 @@ def do_genconfig(args):
 
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
-    config.add_section("ironic")
-    config.set("ironic", "auth_url", ironic_auth_url)
-    config.set("ironic", "admin_user", ironic_username)
-    config.set("ironic", "admin_tenant_name", ironic_tenant)
-    config.set("ironic", "admin_password", ironic_password)
-    config.set("ironic", "insecure", ironic_insecure)
-    config.set("ironic", "default_deploy_kernel_id", default_deploy_kernel)
-    config.set("ironic", "default_deploy_ramdisk_id", default_deploy_ramdisk)
-    config.set("ironic", "default_driver", ironic_default_driver)
+    config.add_section("openstack")
+    config.set("openstack", "auth_url", openstack_auth_url)
+    config.set("openstack", "admin_user", openstack_username)
+    config.set("openstack", "admin_tenant_name", openstack_tenant)
+    config.set("openstack", "admin_password", openstack_password)
+    config.set("openstack", "insecure", openstack_insecure)
+    config.set("openstack", "default_deploy_kernel_id", default_deploy_kernel)
+    config.set("openstack", "default_deploy_ramdisk_id", default_deploy_ramdisk)
+    config.set("openstack", "default_driver", ironic_default_driver)
     config.add_section("oneview")
     config.set("oneview", "manager_url", oneview_manager_url)
     config.set("oneview", "username", oneview_username)

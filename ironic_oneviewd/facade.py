@@ -25,7 +25,6 @@ class Facade(object):
 
     def __init__(self, config):
         self.ironicclient = get_ironic_client(config)
-        self.novaclient = get_nova_client(config)
         self.oneviewclient = get_oneview_client(config)
 
     # =========================================================================
