@@ -18,7 +18,6 @@
 
 from ironic_oneviewd.oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
-from ironic_oneviewd.openstack_client import get_nova_client
 
 
 class Facade(object):
