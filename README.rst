@@ -59,13 +59,6 @@ If you prefer to create your own configuration file, it should look like this::
     allow_insecure_connections=<true,false>
     tls_cacert_file=<path to your CA certfile, if any>
 
-    [nova]
-    auth_url=<your nova authentication url>
-    username=<your admin user name>
-    tenant_name=<your admin tenant name>
-    password=<your admin password>
-    insecure=<true, false>
-
 Usage
 =====
 
