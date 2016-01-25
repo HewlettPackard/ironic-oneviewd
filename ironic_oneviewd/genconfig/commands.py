@@ -28,8 +28,8 @@ def do_genconfig(args):
 
     """
     print("========= DEFAULT ========")
-    default_retry_interval = input("Type the retry interval for daemon manage the nodes, e.g. (0h0m10s): ")
-    retry_interval = default_retry_interval if default_retry_interval else "10s"
+    default_retry_interval = input("Type the retry interval for daemon manage the nodes, e.g., 10, for 10 seconds: ")
+    retry_interval = default_retry_interval if default_retry_interval else "10"
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")

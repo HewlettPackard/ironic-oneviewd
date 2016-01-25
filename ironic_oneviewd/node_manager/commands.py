@@ -55,7 +55,7 @@ def do_manage_ironic_nodes(args):
     conf = ConfClient(config_file, defaults)
     node_manager = NodeManager(conf)
 
-    wait_fixed = to_seconds(conf.DEFAULT.retry_interval) * 1000
+    wait_fixed = int(conf.DEFAULT.retry_interval) * 1000
 
     @retrying.retry(wait_fixed=wait_fixed)
     def execute():

@@ -40,7 +40,7 @@ location of your choice.
 If you prefer to create your own configuration file, it should look like this::
 
     [DEFAULT]
-    retry_interval=<hours>h<minutes>m<seconds>s
+    retry_interval=10
 
     [ironic]
     admin_user=<your admin user name>
