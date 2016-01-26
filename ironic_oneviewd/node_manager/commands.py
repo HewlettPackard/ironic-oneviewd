@@ -55,9 +55,9 @@ def do_manage_ironic_nodes(args):
     conf = ConfClient(config_file, defaults)
     node_manager = NodeManager(conf)
 
-    wait_fixed = int(conf.DEFAULT.retry_interval) * 1000
+    retry_interval_in_ms = int(conf.DEFAULT.retry_interval) * 1000
 
-    @retrying.retry(wait_fixed=wait_fixed)
+    @retrying.retry(wait_fixed=retry_interval_in_ms)
     def execute():
         node_manager.pull_ironic_nodes()
         raise Exception("Continue trying...")
