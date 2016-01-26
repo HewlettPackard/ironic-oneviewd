@@ -96,4 +96,5 @@ class Facade(object):
             server_hardware_uri, server_profile_template_uri, node_uuid)
 
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
-        return self.oneviewclient.server_profile.unassign_server_profile(server_hardware_uri, server_profile_uri)
+        return self.oneviewclient.server_profile.unassign_server_profile(
+            server_hardware_uri, server_profile_uri)

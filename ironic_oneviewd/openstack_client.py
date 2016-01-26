@@ -44,4 +44,3 @@ def get_ironic_client(conf):
     ironicclient = ironic_client.get_client(1, **kwargs)
 
     return ironicclient
-

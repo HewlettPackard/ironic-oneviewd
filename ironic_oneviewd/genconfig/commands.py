@@ -37,7 +37,7 @@ def do_genconfig(args):
     openstack_tenant = input("Type your Openstack user's tenant name: ")
     openstack_password = getpass.getpass("Type your Openstack user's password: ")
     openstack_insecure = input("Would you like the connections with Openstack"
-                            "to be insecure? [y/N]: ") or "N"
+                               "to be insecure? [y/N]: ") or "N"
     openstack_insecure = 'True' if openstack_insecure.lower() == 'y' else 'False'
     default_deploy_kernel = input("Type in the default deploy keynel image"
                                   " ID on Glance: ")

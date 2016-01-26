@@ -48,7 +48,7 @@ class NodeManager:
                     self.manage_node_provision_state(node)
                 except Exception as ex:
                     print('Something went wrong managing the '
-                          'node: %s' %ex.message)
+                          'node: %s' % ex.message)
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state
