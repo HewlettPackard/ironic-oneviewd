@@ -28,8 +28,8 @@ def do_genconfig(args):
     Generates the config file according to user input
     """
     print("========= DEFAULT ========")
-    default_retry_interval = input("Type the retry interval for daemon manage the nodes, e.g., 10, for 10 seconds: ")
-    default_retry_interval = default_retry_interval if default_retry_interval else "300"
+    retry_interval = input("Type the retry interval for daemon manage the nodes, e.g., 10, for 10 seconds: ")
+    retry_interval = retry_interval if retry_interval else "300"
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")
@@ -58,7 +58,7 @@ def do_genconfig(args):
     oneview_insecure = 'True' if oneview_insecure.lower() == 'y' else 'False'
 
     config = ConfigParser()
-    config.set("DEFAULT", "retry_interval", default_retry_interval)
+    config.set("DEFAULT", "retry_interval", retry_interval)
     config.add_section("openstack")
     config.set("openstack", "auth_url", openstack_auth_url)
     config.set("openstack", "admin_user", openstack_username)
