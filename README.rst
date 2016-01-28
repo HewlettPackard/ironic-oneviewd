@@ -39,6 +39,9 @@ location of your choice.
 
 If you prefer to create your own configuration file, it should look like this::
 
+    [DEFAULT]
+    retry_interval=<retry interval in seconds>
+
     [ironic]
     admin_user=<your admin user name>
     admin_password=<your admin password>

@@ -18,14 +18,12 @@
 
 from ironic_oneviewd.oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
-from ironic_oneviewd.openstack_client import get_nova_client
 
 
 class Facade(object):
 
     def __init__(self, config):
         self.ironicclient = get_ironic_client(config)
-        self.novaclient = get_nova_client(config)
         self.oneviewclient = get_oneview_client(config)
 
     # =========================================================================
@@ -98,4 +96,5 @@ class Facade(object):
             server_hardware_uri, server_profile_template_uri, node_uuid)
 
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
-        return self.oneviewclient.server_profile.unassign_server_profile(server_hardware_uri, server_profile_uri)
+        return self.oneviewclient.server_profile.unassign_server_profile(
+            server_hardware_uri, server_profile_uri)
