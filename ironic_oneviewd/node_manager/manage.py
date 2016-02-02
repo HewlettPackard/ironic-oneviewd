@@ -16,6 +16,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from concurrent import futures
 import six
 
 from oslo_log import log as logging
@@ -29,6 +30,7 @@ LOG = logging.getLogger(__name__)
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 
+MAX_WORKERS = 20
 
 class NodeManager:
     def __init__(self, conf_client):
@@ -42,13 +44,12 @@ class NodeManager:
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
-        for node in ironic_nodes:
-            if node.driver in self.supported_drivers:
-                try:
-                    self.manage_node_provision_state(node)
-                except Exception as ex:
-                    print('Something went wrong managing the '
-                          'node: %s' % ex.message)
+        nodes = [node for node in ironic_nodes
+                 if node.driver in self.supported_drivers]
+
+        workers = min(MAX_WORKERS, len(nodes))
+        with futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            result = executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state

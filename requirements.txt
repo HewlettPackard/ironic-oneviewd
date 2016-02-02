@@ -8,3 +8,4 @@ python-oneviewclient
 requests
 future
 retrying>=1.2.3
+futures
