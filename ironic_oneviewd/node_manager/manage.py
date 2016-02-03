@@ -60,6 +60,7 @@ class NodeManager:
         elif provision_state == MANAGEABLE_PROVISION_STATE:
             self.take_manageable_state_actions(node)
 
+
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
         :param capabilities: the node capabilities as a formatted string
@@ -107,6 +108,7 @@ class NodeManager:
                 node.uuid
             )
             self.facade.set_node_provision_state(node, 'manage')
+            print 'RAFAEL got node {0}'.format(node.uuid)
 
     def apply_enroll_node_configuration(self, server_hardware_uri,
                                         server_profile_template_uri,
