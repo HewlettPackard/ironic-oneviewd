@@ -49,7 +49,7 @@ class NodeManager:
         )
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
-
+        self.manage_node_provision_state(nodes[0])
         workers = min(MAX_WORKERS, len(nodes))
         with futures.ThreadPoolExecutor(max_workers=workers) as executor:
             result = executor.map(self.manage_node_provision_state, nodes)
@@ -57,7 +57,10 @@ class NodeManager:
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state
         if node.maintenance:
-            return
+            raise sync_exceptions.NodeInMaintenance(
+                "The node %(node)s is in maintenance state."
+                " Ignoring it." % {'node': node.uuid}
+            )
         elif provision_state == ENROLL_PROVISION_STATE:
             self.take_enroll_state_actions(node)
         elif provision_state == MANAGEABLE_PROVISION_STATE:
@@ -104,6 +107,7 @@ class NodeManager:
         )
         sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
         if sh_server_profile_uri is not None:
+	    raise Exception(server_hardware_dict)
             LOG.error("The Server Hardware already has a "
                       "Server Profile applied.")
         else:
@@ -112,6 +116,7 @@ class NodeManager:
                 node_server_profile_template_uri,
                 node.uuid
             )
+
             try:
                 self.facade.set_node_provision_state(node, 'manage')
             except Exception as ex:
@@ -123,6 +128,7 @@ class NodeManager:
     def apply_enroll_node_configuration(self, server_hardware_uri,
                                         server_profile_template_uri,
                                         node_uuid):
+	raise Exception("heueuheuhe")
         server_profile_name = "Ironic [%s]" % (node_uuid)
         sp_applied_uri = self.facade.\
             generate_and_assign_server_profile_from_server_profile_template(

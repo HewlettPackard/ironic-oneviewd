@@ -68,3 +68,6 @@ class OneViewServerProfileAssociatedError(Exception):
 class OneViewErrorStateSettingPowerState(Exception):
     message = _("Get Error State in OneView trying to set power state of "
                 "Server Hardware")
+
+class NodeInMaintenance(Exception):
+    message = _("The node is in maintenance state")
