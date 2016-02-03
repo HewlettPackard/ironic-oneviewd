@@ -89,48 +89,53 @@ class NodeManager:
 
     def take_enroll_state_actions(self, node):
         LOG.debug("Taking enroll state actions for node %(node)s."
-                  % {"node": node.uuid}
-        )
-
+                  % {"node": node.uuid})
         node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
         node_capabilities = self.capabilities_to_dict(
-            node.properties.get('capabilities')
-        )
+            node.properties.get('capabilities'))
         node_server_profile_template_uri = node_capabilities.get(
-            'server_profile_template_uri'
-        )
-        server_hardware_dict = self.facade.get_server_hardware(
-            node_server_hardware_uri
-        )
-        sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
-        if sh_server_profile_uri is not None:
-            LOG.error("The Server Hardware already has a "
-                      "Server Profile applied.")
+            'server_profile_template_uri')
+
+        assigned_server_profile_uri = self.facade.\
+            get_server_profile_assigned_to_sh(node_server_hardware_uri)
+        if assigned_server_profile_uri is None:
+            server_profile_name = "Ironic [%s]" % (node.uuid)
+            assigned_server_profile_uri = self.facade.\
+                generate_and_assign_server_profile_from_server_profile_template(
+                    node_server_profile_template_uri, server_profile_name,
+                    node_server_hardware_uri)
         else:
-            self.apply_enroll_node_configuration(
-                node_server_hardware_uri,
-                node_server_profile_template_uri,
-                node.uuid
-            )
-            try:
-                self.facade.set_node_provision_state(node, 'manage')
-            except Exception as ex:
-                raise Exception("Error handling the node %(node)s to"
-                                " manageable state. %(ex_msg)s" %
-                                {"node": node.uuid, "ex_msg": ex.message}
-                      )
+            LOG.warning("Server Hardware %(sh_uri)s already has a Server "
+                        "Profile %(sp_uri)s assigned. Skipping this task." %
+                        {"sh_uri": node_server_hardware_uri,
+                         "sp_uri": assigned_server_profile_uri})
 
-    def apply_enroll_node_configuration(self, server_hardware_uri,
-                                        server_profile_template_uri,
-                                        node_uuid):
-        server_profile_name = "Ironic [%s]" % (node_uuid)
-        sp_applied_uri = self.facade.\
-            generate_and_assign_server_profile_from_server_profile_template(
-                server_profile_template_uri, server_profile_name,
-                server_hardware_uri)
+        try:
+            self.apply_enroll_node_port_configuration(assigned_server_profile_uri)
+            self.facade.set_node_provision_state(node, 'manage')
+        except Exception as ex:
+            exc_msg = ("Error handling the node %(node)s to manageable state."
+                       " %(ex_msg)s" % {"node": node.uuid,
+                                        "ex_msg": ex.message})
+            LOG.error(exc_msg)
+            raise Exception(exc_msg)
 
-        sp_dict = self.facade.get_server_profile(sp_applied_uri)
-        server_profile_mac = sp_dict.get('connections')[0].get('mac')
+    def apply_enroll_node_port_configuration(self, server_profile_uri):
+        server_profile_dict = self.facade.get_server_profile(server_profile_uri)
+
+        primary_boot_connection = None
+        for connection in server_profile_dict.get('connections'):
+            boot = connection.get('boot')
+            if boot is not None and boot.get('priority').lower() == 'primary':
+                primary_boot_connection = connection
+
+        if primary_boot_connection is None:
+            message = ("No primary boot connection configured for Server "
+                       "Profile %s. Unable to create a port in Ironic."
+                       % server_profile_uri)
+            raise Exception(message)
+
+        server_profile_mac = primary_boot_connection.get('mac')
         self.facade.create_node_port(node_uuid, server_profile_mac)
 
     def take_manageable_state_actions(self, node):
