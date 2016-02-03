@@ -42,22 +42,5 @@ class TestIronicOneviewd(TestCase):
         mock_node_manager_method):
         mock_facade_method.return_value = []
 
-
-
         mock.ironic_nodes.return_value = []
         self.assertEqual([], mock.ironic_nodes)
-
-ENROLL = 'enroll'
-MANAGEABLE = 'manageable'
-
-    def test_manage_node_provision_state(self):
-
-        class Node():    
-            def __init__(self):
-                self.provision_state = ''
-       
-
-       node1 = Node()
-       node1.provison_state = ENROLL
-       node2 = NOde()
-       node2 
