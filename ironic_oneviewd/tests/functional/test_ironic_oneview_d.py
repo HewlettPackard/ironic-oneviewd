@@ -16,23 +16,48 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
-import unittest
+from mock import MagicMock
+from mock import patch
+from unittest import TestCase
 
-from ironic_oneviewd import facade
+from ironic_oneviewd.facade import Facade
 from ironic_oneviewd.oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
+from ironic_oneviewd.node_manager.manage import NodeManager
+
+class TestIronicOneviewd(TestCase):
+
+    @patch('ironic_oneviewd.facade.Facade')
+    def test_take_node_actions(self, mock):
+        self.assertNotIsInstance(mock, Facade)
+
+    @patch.object(Facade, 'get_ironic_node_list', autospec=True)
+    def test_number_two(self, mock):
+        mock.return_value = []
+        self.assertEqual([], mock.return_value)
+
+    @patch.object(NodeManager, 'pull_ironic_nodes', autospec=True)
+    @patch.object(Facade, 'get_ironic_node_list', autospec=True)
+    def test_pull_ironic_nodes(self, mock_facade_method,
+        mock_node_manager_method):
+        mock_facade_method.return_value = []
 
 
-class TestIronicOneviewd(unittest.TestCase):
 
-    @mock.patch.object(get_oneview_client, 'get_oneview_client')
-    @mock.patch.object(get_ironic_client, 'get_ironic_list')
-    @mock.patch.object(facade.Facade, 'get_ironic_node_list')
-    def test_take_node_actions(self, mock_get_ironic_node_list):
-        facade_mock = facade.Facade()
+        mock.ironic_nodes.return_value = []
+        self.assertEqual([], mock.ironic_nodes)
 
-        mock_get_ironic_node_list().return_value = []
-        #self.assertEquals([], mock_get_ironic_node_list.getvalue())
-        raise Exception(facade_mock.get_ironic_node_list())
+ENROLL = 'enroll'
+MANAGEABLE = 'manageable'
 
+    def test_manage_node_provision_state(self):
+
+        class Node():    
+            def __init__(self):
+                self.provision_state = ''
+       
+
+       node1 = Node()
+       node1.provison_state = ENROLL
+       node2 = NOde()
+       node2 
