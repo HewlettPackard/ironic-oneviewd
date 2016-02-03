@@ -31,7 +31,7 @@ def _getHandler(filename, formatter):
     return handler
 
 
-def getLogger(name, servicename='service'):
+def getLogger(name, servicename='ironic-oneviewd'):
     filename = servicename + '.log'
     if name not in _loggers:
         logger = logging.getLogger(name)

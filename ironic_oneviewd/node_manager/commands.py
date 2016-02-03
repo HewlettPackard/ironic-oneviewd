@@ -59,6 +59,9 @@ def do_manage_ironic_nodes(args):
 
     @retrying.retry(wait_fixed=retry_interval_in_ms)
     def execute():
-        node_manager.pull_ironic_nodes()
+        try:
+            node_manager.pull_ironic_nodes()
+        except Exception as ex:
+            print(ex.message)
         raise Exception("Continue trying...")
     execute()
