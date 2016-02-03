@@ -20,19 +20,27 @@ import mock
 import unittest
 
 from ironic_oneviewd import facade
-from ironic_oneviewd.oneview_client import get_oneview_client
-from ironic_oneviewd.openstack_client import get_ironic_client
-
+import ironic_oneviewd.oneview_client
+import ironic_oneviewd.openstack_client
+from ironic_oneviewd.node_manager import manage
 
 class TestIronicOneviewd(unittest.TestCase):
 
-    @mock.patch.object(get_oneview_client, 'get_oneview_client')
-    @mock.patch.object(get_ironic_client, 'get_ironic_list')
-    @mock.patch.object(facade.Facade, 'get_ironic_node_list')
-    def test_take_node_actions(self, mock_get_ironic_node_list):
-        facade_mock = facade.Facade()
-
-        mock_get_ironic_node_list().return_value = []
-        #self.assertEquals([], mock_get_ironic_node_list.getvalue())
-        raise Exception(facade_mock.get_ironic_node_list())
-
+    def test_take_node_actions(self):
+        #mock_function = mock.create_autospec(
+        #    ironic_oneviewd.openstack_client.get_ironic_client,
+        #    return_value='a'
+        #)
+        facade.Facade = mock.create_autospec(facade.Facade)
+        mock_get_ironic_node_list = mock.create_autospec(
+            facade.Facade.get_ironic_node_list(), return_value=[]
+        )
+        
+        self.facade = facade.Facade(None)
+        self.facade.get_ironic_node_list = mock_get_ironic_node_list
+        self.assertEquals([], mock_get_ironic_node_list())
+        manager = manage.NodeManager(None)
+        manager.facade = self.facade
+        result = manager.pull_ironic_nodes()
+        raise Exception(result)
+        #raise Exception(self.facade.get_ironic_node_list())
