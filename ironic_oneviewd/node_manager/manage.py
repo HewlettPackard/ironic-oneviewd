@@ -19,11 +19,11 @@
 from concurrent import futures
 import six
 
-from oslo_log import log as logging
-
 from ironic_oneviewd import facade
+from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import sync_exceptions
 from ironic_oneviewd.openstack.common._i18n import _
+
 
 LOG = logging.getLogger(__name__)
 
@@ -44,6 +44,9 @@ class NodeManager:
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
+        LOG.info("%(len_nodes)s Ironic nodes has been taken."
+                  % {"len_nodes": len(ironic_nodes)}
+        )
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
 
@@ -84,8 +87,10 @@ class NodeManager:
         return capabilities_dict
 
     def take_enroll_state_actions(self, node):
-        # TODO (sinval): temos de validar se node_capabilities existem
-        # TODO (sinval): validar se essas coisas sao None
+        LOG.debug("Taking enroll state actions for node %(node)s."
+                  % {"node": node.uuid}
+        )
+
         node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
         node_capabilities = self.capabilities_to_dict(
             node.properties.get('capabilities')
@@ -106,7 +111,13 @@ class NodeManager:
                 node_server_profile_template_uri,
                 node.uuid
             )
-            self.facade.set_node_provision_state(node, 'manage')
+            try:
+                self.facade.set_node_provision_state(node, 'manage')
+            except Exception as ex:
+                raise Exception("Error handling the node %(node)s to"
+                                " manageable state. %(ex_msg)s" %
+                                {"node": node.uuid, "ex_msg": ex.message}
+                      )
 
     def apply_enroll_node_configuration(self, server_hardware_uri,
                                         server_profile_template_uri,
@@ -120,7 +131,15 @@ class NodeManager:
         sp_dict = self.facade.get_server_profile(sp_applied_uri)
         server_profile_mac = sp_dict.get('connections')[0].get('mac')
         self.facade.create_node_port(node_uuid, server_profile_mac)
-        # TODO(sinval) config volumes (SAN storage)
 
     def take_manageable_state_actions(self, node):
-        self.facade.set_node_provision_state(node, 'provide')
+        LOG.debug("Taking manageable state actions for node %(node)s."
+                  % {"node": node.uuid}
+        )
+        try:
+            self.facade.set_node_provision_state(node, 'provide')
+        except Exception as ex:
+            raise Exception("Error handling the node %(node)s to"
+                            " available state. %(ex_msg)s" %
+                            {"node": node.uuid, "ex_msg": ex.message}
+                  )
