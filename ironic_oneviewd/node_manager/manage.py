@@ -111,7 +111,7 @@ class NodeManager:
                          "sp_uri": assigned_server_profile_uri})
 
         try:
-            self.apply_enroll_node_port_configuration(assigned_server_profile_uri)
+            self.apply_enroll_node_port_configuration(node.uuid, assigned_server_profile_uri)
             self.facade.set_node_provision_state(node, 'manage')
         except Exception as ex:
             exc_msg = ("Error handling the node %(node)s to manageable state."
@@ -120,7 +120,7 @@ class NodeManager:
             LOG.error(exc_msg)
             raise Exception(exc_msg)
 
-    def apply_enroll_node_port_configuration(self, server_profile_uri):
+    def apply_enroll_node_port_configuration(self, node_uuid, server_profile_uri):
         server_profile_dict = self.facade.get_server_profile(server_profile_uri)
 
         primary_boot_connection = None
@@ -136,7 +136,13 @@ class NodeManager:
             raise Exception(message)
 
         server_profile_mac = primary_boot_connection.get('mac')
-        self.facade.create_node_port(node_uuid, server_profile_mac)
+
+        node_port = self.facade.get_node_port_by_mac_address(server_profile_mac)
+        if node_port is None:
+            self.facade.create_node_port(node_uuid, server_profile_mac)
+        else:
+            LOG.warning("A port with %(mac)s MAC address was already created."
+                        "Skipping this task." % {"mac": server_profile_mac})
 
     def take_manageable_state_actions(self, node):
         LOG.debug("Taking manageable state actions for node %(node)s."
