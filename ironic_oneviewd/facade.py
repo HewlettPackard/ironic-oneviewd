@@ -48,8 +48,11 @@ class Facade(object):
     def set_node_provision_state(self, node, state):
         return self.ironicclient.node.set_provision_state(node.uuid, state)
 
-    def get_node_port_by_mac_address(self, port_mac_address):
-        return self.ironicclient.port.get_by_address(address=port_mac_address)
+    def get_port(self, port_id):
+        return self.ironicclient.port.get(port_id)
+
+    def get_port_list_by_mac(self, port_mac_address):
+        return self.ironicclient.port.list(address=port_mac_address)
 
     def create_node_port(self, node_uuid, port_mac_address):
         return self.ironicclient.port.create(node_uuid=node_uuid,
