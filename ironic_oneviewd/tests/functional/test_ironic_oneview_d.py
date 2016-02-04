@@ -28,7 +28,6 @@ import ironic_oneviewd.oneview_client
 import ironic_oneviewd.openstack_client
 from ironic_oneviewd.node_manager import manage
 
-
 class FakeIronicNode(object):
     def __init__(self, id, uuid, chassis_uuid, provision_state, driver,
                  driver_info={}, driver_internal_info={}, name='fake-node',

@@ -47,6 +47,7 @@ class NodeManager:
         LOG.info("%(len_nodes)s Ironic nodes has been taken."
                   % {"len_nodes": len(ironic_nodes)}
         )
+        raise ("blablabla")
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
         self.manage_node_provision_state(nodes[0])
