@@ -28,6 +28,8 @@ import ironic_oneviewd.oneview_client
 import ironic_oneviewd.openstack_client
 from ironic_oneviewd.node_manager import manage
 
+from ironic_oneviewd import service_logging as logging
+
 class FakeIronicNode(object):
     def __init__(self, id, uuid, chassis_uuid, provision_state, driver,
                  driver_info={}, driver_internal_info={}, name='fake-node',
@@ -69,12 +71,15 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_ironic_node_list')
     def test_take_node_actions(self, mock_get_ironic_node_list, mock_facade):
+       
+       fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
        mocked_facade = facade.Facade(None)
        mock_get_ironic_node_list.return_value = self.fake_ironic_nodes
        mocked_facade.get_ironic_node_list = mock_get_ironic_node_list
        mock_facade.return_value = mocked_facade
        node_manager = NodeManager(None)
        node_manager.pull_ironic_nodes()
+       mock_get_ironic_node_list.assert_called_with()
 
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(manage.NodeManager, 'take_enroll_state_actions')
@@ -112,32 +117,146 @@ class TestIronicOneviewd(unittest.TestCase):
         )
 
 
-    @mock.patch.object(facade.Facade,
-        'get_server_hardware')
-    @mock.patch.object(facade.Facade,
-        'create_node_port')
-    @mock.patch.object(facade.Facade, 
-        'get_server_profile')
+    @mock.patch.object(facade.Facade, 'set_node_provision_state')
+    @mock.patch.object(facade.Facade, 'get_server_hardware')
+    @mock.patch.object(facade.Facade, 'create_node_port')
+    @mock.patch.object(facade.Facade, 'get_server_profile')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 
         'generate_and_assign_server_profile_from_server_profile_template')
     def test_applying_server_profile(
         self, mock_apply_server_profile, mock_facade, mock_get_server_profile,
-        mock_create_node_port, mock_get_server_hardware
+        mock_create_node_port, mock_get_server_hardware,
+        mock_set_node_provision_state
     ):
-	mocked_facade = facade.Facade(None)
-	mock_apply_server_profile.return_value = '/rest/server-profile/123'
-	mock_get_server_profile.return_value = \
-        {'connections': {'mac': '01:23:45:67:89:ab'}}
-	mock_get_server_hardware.return_value = {}
-
+        mocked_facade = facade.Facade(None)
+        node_manager = NodeManager(None)
+        
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
-        fake_node.driver_info = {'server_hardware_uri': '/rest/server-hardware/123'}
-        fake_node.properties = {'capabilities': 
-                "{'server_profile_template_uri':'/rest/server-profile-template/123'}"}
-        node_manager = NodeManager(None)
+
+        info = {'server_hardware_uri': '/rest/server-hardware/123'}
+        fake_node.driver_info = info
+        mock.patch.dict(fake_node.driver_info, info, clear=True)
+        
+        properties =  {'capabilities':
+        "server_profile_template_uri:/rest/server-profile-templates/123"}
+        fake_node.properties = properties
+        mock.patch.dict(fake_node.properties, properties, clear=True)
+
+        server_hardware = {'serverProfileUri': None}
+        mock_get_server_hardware.return_value = server_hardware
+        mocked_facade.get_server_hardware = mock_get_server_hardware
+
+        uri_server_profile_applied = '/rest/server-profiles/123'
+        mock_apply_server_profile.return_value = uri_server_profile_applied
+        mocked_facade.generate_and_assign_server_profile_from_server_profile_template = mock_apply_server_profile
+      
+        server_profile = {'connections': [{'mac': '01:23:45:67:89:ab'}]}
+        mock_get_server_profile.return_value = server_profile
+        mocked_facade.get_server_profile = mock_get_server_profile
+
+        port_created = True
+        mock_create_node_port.return_value = port_created
+        mocked_facade.create_node_port = mock_create_node_port
+
+        node_provision_state_changed = {'node': 
+            fake_node.uuid, 'ex_msg': 'manageable'}
+        mock_set_node_provision_state.return_value = \
+        node_provision_state_changed
+        mocked_facade.set_node_provision_state = mock_set_node_provision_state
         node_manager.manage_node_provision_state(fake_node)
 
+        mock_get_server_hardware.assert_called_with('/rest/server-hardware/123')
+        mock_apply_server_profile.assert_called_with(
+            '/rest/server-profile-templates/123',
+            'Ironic [%(uuid)s]' % {'uuid' : fake_node.uuid},
+            '/rest/server-hardware/123'
+        )
+        
+        mock_create_node_port.assert_called_with(
+            fake_node.uuid,
+            '01:23:45:67:89:ab'
+        )
 
-        mock_create_node_port.assert_called_with(fake_node.uuid, '01:23:45:67:89:ab')
+        mock_set_node_provision_state.assert_called_with(
+            fake_node,
+            'manage'
+        )
+
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
+    @mock.patch.object(facade.Facade, 'get_server_hardware')
+    @mock.patch.object(facade.Facade, 'create_node_port')
+    @mock.patch.object(facade.Facade, 'get_server_profile')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
+    @mock.patch.object(facade.Facade, 
+        'generate_and_assign_server_profile_from_server_profile_template')
+    def test_fail_when_hardware_already_has_server_profile_applied(
+        self, mock_apply_server_profile, mock_facade, mock_get_server_profile,
+        mock_create_node_port, mock_get_server_hardware,
+        mock_log
+    ):
+        mocked_facade = facade.Facade(None)
+        node_manager = NodeManager(None)
+        
+        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
+        fake_node.provision_state = 'enroll'
+
+        info = {'server_hardware_uri': '/rest/server-hardware/123'}
+        fake_node.driver_info = info
+        mock.patch.dict(fake_node.driver_info, info, clear=True)
+        
+        properties =  {'capabilities':
+        "server_profile_template_uri:/rest/server-profile-templates/123"}
+        fake_node.properties = properties
+        mock.patch.dict(fake_node.properties, properties, clear=True)
+
+        server_hardware = {'serverProfileUri': '/rest/server-profiles/123'}
+        mock_get_server_hardware.return_value = server_hardware
+        mocked_facade.get_server_hardware = mock_get_server_hardware
+
+        node_manager.manage_node_provision_state(fake_node)
+        
+        mock_log.assert_called_with("The Server Hardware already has a Server Profile applied.")
+
+
+    @mock.patch.object(facade.Facade, 'set_node_provision_state')
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
+    @mock.patch.object(facade.Facade, 'get_server_hardware')
+    @mock.patch.object(facade.Facade, 'get_server_profile')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
+    @mock.patch.object(facade.Facade, 
+        'generate_and_assign_server_profile_from_server_profile_template')
+    def test_fail_when_hardware_already_has_server_profile_applied(
+        self, mock_apply_server_profile, mock_facade, mock_get_server_profile,
+        mock_get_server_hardware, mock_log, mock_set_node_provision_state
+    ):
+        mocked_facade = facade.Facade(None)
+        node_manager = NodeManager(None)
+        
+        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
+        fake_node.provision_state = 'enroll'
+
+        info = {'server_hardware_uri': '/rest/server-hardware/123'}
+        fake_node.driver_info = info
+        mock.patch.dict(fake_node.driver_info, info, clear=True)
+        
+        properties =  {'capabilities':
+        "server_profile_template_uri:/rest/server-profile-templates/123"}
+        fake_node.properties = properties
+        mock.patch.dict(fake_node.properties, properties, clear=True)
+
+        server_hardware = {'serverProfileUri': None}
+        mock_get_server_hardware.return_value = server_hardware
+        mocked_facade.get_server_hardware = mock_get_server_hardware
+
+        msg = 'Error handling the node %(node)s to manageable state. %(ex_msg)s' % {"node": fake_node.uuid, "ex_msg": 'blablabla'}
+
+        mocked_exception = Exception('blablabla')
+        mock_set_node_provision_state.side_effect = mocked_exception  
+        mocked_facade.set_node_provision_state = mock_set_node_provision_state
+
+        self.assertRaises(Exception, 
+                          node_manager.manage_node_provision_state,
+                          fake_node)
+

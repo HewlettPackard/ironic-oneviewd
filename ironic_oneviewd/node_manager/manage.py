@@ -47,7 +47,6 @@ class NodeManager:
         LOG.info("%(len_nodes)s Ironic nodes has been taken."
                   % {"len_nodes": len(ironic_nodes)}
         )
-        raise ("blablabla")
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
         self.manage_node_provision_state(nodes[0])
@@ -107,10 +106,9 @@ class NodeManager:
             node_server_hardware_uri
         )
         sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
+
         if sh_server_profile_uri is not None:
-	    raise Exception(server_hardware_dict)
-            LOG.error("The Server Hardware already has a "
-                      "Server Profile applied.")
+            LOG.error("The Server Hardware already has a Server Profile applied.")
         else:
             self.apply_enroll_node_configuration(
                 node_server_hardware_uri,
@@ -129,13 +127,11 @@ class NodeManager:
     def apply_enroll_node_configuration(self, server_hardware_uri,
                                         server_profile_template_uri,
                                         node_uuid):
-	raise Exception("heueuheuhe")
         server_profile_name = "Ironic [%s]" % (node_uuid)
         sp_applied_uri = self.facade.\
             generate_and_assign_server_profile_from_server_profile_template(
                 server_profile_template_uri, server_profile_name,
                 server_hardware_uri)
-
         sp_dict = self.facade.get_server_profile(sp_applied_uri)
         server_profile_mac = sp_dict.get('connections')[0].get('mac')
         self.facade.create_node_port(node_uuid, server_profile_mac)
