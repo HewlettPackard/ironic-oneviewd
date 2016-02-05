@@ -49,7 +49,6 @@ class NodeManager:
         )
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
-        self.manage_node_provision_state(nodes[0])
         workers = min(MAX_WORKERS, len(nodes))
         with futures.ThreadPoolExecutor(max_workers=workers) as executor:
             result = executor.map(self.manage_node_provision_state, nodes)
@@ -99,44 +98,6 @@ class NodeManager:
         node_server_profile_template_uri = node_capabilities.get(
             'server_profile_template_uri')
 
-#<<<<<<< HEAD
-#            'server_profile_template_uri'
-#        )
-#        server_hardware_dict = self.facade.get_server_hardware(
-#            node_server_hardware_uri
-#        )
-#        sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
-#
-#        if sh_server_profile_uri is not None:
-#            LOG.error("The Server Hardware already has a Server Profile applied.")
-#        else:
-#            self.apply_enroll_node_configuration(
-#                node_server_hardware_uri,
-#                node_server_profile_template_uri,
-#                node.uuid
-#            )
-#
-#            try:
-#                self.facade.set_node_provision_state(node, 'manage')
-#            except Exception as ex:
-#                raise Exception("Error handling the node %(node)s to"
-#                                " manageable state. %(ex_msg)s" %
-#                                {"node": node.uuid, "ex_msg": ex.message}
-#                      )
-#
-#    def apply_enroll_node_configuration(self, server_hardware_uri,
-#                                        server_profile_template_uri,
-#                                        node_uuid):
-#        server_profile_name = "Ironic [%s]" % (node_uuid)
-#        sp_applied_uri = self.facade.\
-#            generate_and_assign_server_profile_from_server_profile_template(
-#                server_profile_template_uri, server_profile_name,
-#                server_hardware_uri)
-#        sp_dict = self.facade.get_server_profile(sp_applied_uri)
-#        server_profile_mac = sp_dict.get('connections')[0].get('mac')
-#        self.facade.create_node_port(node_uuid, server_profile_mac)
-#=======
-#           'server_profile_template_uri')
         assigned_server_profile_uri = self.facade.\
             get_server_profile_assigned_to_sh(node_server_hardware_uri)
         if assigned_server_profile_uri is None:
@@ -189,7 +150,6 @@ class NodeManager:
                 LOG.warning("A port with MAC address %(mac)s was already "
                             "created for this node. Skipping this task." % 
                             {"mac": server_profile_mac})
-#>>>>>>> US02.07
 
     def take_manageable_state_actions(self, node):
         LOG.debug("Taking manageable state actions for node %(node)s."
