@@ -32,6 +32,7 @@ MANAGEABLE_PROVISION_STATE = 'manageable'
 
 MAX_WORKERS = 20
 
+
 class NodeManager:
     def __init__(self, conf_client):
 
@@ -45,13 +46,13 @@ class NodeManager:
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
         LOG.info("%(len_nodes)s Ironic nodes has been taken."
-                  % {"len_nodes": len(ironic_nodes)}
-        )
+                 % {"len_nodes": len(ironic_nodes)})
+
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
         workers = min(MAX_WORKERS, len(nodes))
         with futures.ThreadPoolExecutor(max_workers=workers) as executor:
-            result = executor.map(self.manage_node_provision_state, nodes)
+            executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state
@@ -64,7 +65,6 @@ class NodeManager:
             self.take_enroll_state_actions(node)
         elif provision_state == MANAGEABLE_PROVISION_STATE:
             self.take_manageable_state_actions(node)
-
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
@@ -113,7 +113,10 @@ class NodeManager:
                          "sp_uri": assigned_server_profile_uri})
 
         try:
-            self.apply_enroll_node_port_configuration(node.uuid, node.ports, assigned_server_profile_uri)
+            self.apply_enroll_node_port_configuration(
+                node.uuid, node.ports, assigned_server_profile_uri
+            )
+
             self.facade.set_node_provision_state(node, 'manage')
         except Exception as ex:
             exc_msg = ("Error handling the node %(node)s to manageable state."
@@ -122,8 +125,12 @@ class NodeManager:
             LOG.error(exc_msg)
             raise Exception(exc_msg)
 
-    def apply_enroll_node_port_configuration(self, node_uuid, node_ports, server_profile_uri):
-        server_profile_dict = self.facade.get_server_profile(server_profile_uri)
+    def apply_enroll_node_port_configuration(self, node_uuid, node_ports,
+                                             server_profile_uri):
+
+        server_profile_dict = self.facade.get_server_profile(
+            server_profile_uri
+        )
 
         primary_boot_connection = None
         for connection in server_profile_dict.get('connections'):
@@ -147,18 +154,22 @@ class NodeManager:
             if port_obj.node_uuid != node_uuid:
                 self.facade.create_node_port(node_uuid, server_profile_mac)
             else:
-                LOG.warning("A port with MAC address %(mac)s was already "
-                            "created for this node. Skipping this task." % 
-                            {"mac": server_profile_mac})
+                LOG.warning(
+                    'A port with MAC address %(mac)s was already '
+                    'created for this node. Skipping this task.' %
+                    {"mac": server_profile_mac}
+                )
 
     def take_manageable_state_actions(self, node):
-        LOG.debug("Taking manageable state actions for node %(node)s."
-                  % {"node": node.uuid}
+        LOG.debug(
+            'Taking manageable state actions for node %(node)s.' %
+            {"node": node.uuid}
         )
         try:
             self.facade.set_node_provision_state(node, 'provide')
         except Exception as ex:
-            raise Exception("Error handling the node %(node)s to"
-                            " available state. %(ex_msg)s" %
-                            {"node": node.uuid, "ex_msg": ex.message}
-                  )
+            raise Exception(
+                'Error handling the node %(node)s to'
+                'available state. %(ex_msg)s' %
+                {"node": node.uuid, "ex_msg": ex.message}
+            )
