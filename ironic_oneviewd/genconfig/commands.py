@@ -57,7 +57,7 @@ def do_genconfig(args):
     oneview_username = input("Type your OneView username: ")
     oneview_password = getpass.getpass("Type your OneView user's password: ")
     oneview_insecure = input("Would you like the connections with OneView "
-                           "to be insecure? [y/N]: ") or "N"
+                             "to be insecure? [y/N]: ") or "N"
     oneview_insecure = 'True' if oneview_insecure.lower() == 'y' else 'False'
 
     config = ConfigParser()
