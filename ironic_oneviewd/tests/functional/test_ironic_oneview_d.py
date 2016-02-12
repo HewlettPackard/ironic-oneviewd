@@ -46,6 +46,16 @@ class FakeIronicNode(object):
         self.name = name
 
 
+class FakeConfHelper(object):
+    def __init__(self, max_workers):
+        self.thread_pool_max_workers = max_workers
+
+
+class FakeConfClient(object):
+    def __init__(self, max_workers):
+        self.DEFAULT = FakeConfHelper(max_workers)
+
+
 POOL_OF_FAKE_IRONIC_NODES = [
     FakeIronicNode(
         id=123,
@@ -68,6 +78,8 @@ POOL_OF_FAKE_IRONIC_NODES = [
     )
 ]
 
+FAKE_CONFIG_CLIENT = FakeConfClient(max_workers=20)
+
 
 class TestIronicOneviewd(unittest.TestCase):
 
@@ -82,7 +94,7 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_get_ironic_node_list.return_value = self.fake_ironic_nodes
         mocked_facade.get_ironic_node_list = mock_get_ironic_node_list
         mock_facade.return_value = mocked_facade
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
         node_manager.pull_ironic_nodes()
         mock_get_ironic_node_list.assert_called_with()
 
@@ -93,7 +105,7 @@ class TestIronicOneviewd(unittest.TestCase):
     ):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
         node_manager.manage_node_provision_state(fake_node)
         mock_take_enroll_state_actions.assert_called_with(fake_node)
 
@@ -104,7 +116,7 @@ class TestIronicOneviewd(unittest.TestCase):
     ):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'manageable'
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
         node_manager.manage_node_provision_state(fake_node)
         mock_take_manageable_state_actions.assert_called_with(fake_node)
 
@@ -113,8 +125,8 @@ class TestIronicOneviewd(unittest.TestCase):
         self, mock_facade
     ):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
         fake_node.maintenance = True
-        node_manager = NodeManager(None)
         self.assertRaises(exceptions.NodeInMaintenance,
                           node_manager.manage_node_provision_state,
                           fake_node)
@@ -133,7 +145,7 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac):
 
         mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -206,7 +218,7 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_get_server_profile_assigned_to_sh, mock_log
     ):
         mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -261,7 +273,7 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_get_port_list_by_mac
     ):
         mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'

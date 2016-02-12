@@ -30,8 +30,6 @@ LOG = logging.getLogger(__name__)
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 
-MAX_WORKERS = 20
-
 
 class NodeManager:
     def __init__(self, conf_client):
@@ -42,6 +40,9 @@ class NodeManager:
 
         self.conf_client = conf_client
         self.facade = facade.Facade(conf_client)
+        self.max_workers = int(
+            self.conf_client.DEFAULT.thread_pool_max_workers
+        )
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
@@ -50,7 +51,9 @@ class NodeManager:
 
         nodes = [node for node in ironic_nodes
                  if node.driver in self.supported_drivers]
-        workers = min(MAX_WORKERS, len(nodes))
+
+        workers = min(self.max_workers, len(nodes))
+
         with futures.ThreadPoolExecutor(max_workers=workers) as executor:
             executor.map(self.manage_node_provision_state, nodes)
 
