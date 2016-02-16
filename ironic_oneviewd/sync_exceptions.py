@@ -108,7 +108,7 @@ class ServerHardwareAlreadyHasServerProfileException(Exception):
                            "Server Hardware %s already has a "
                            "Server Profile %s assigned" %
                            (node_server_profile_uri,
-                           assigned_server_profile_uri))
+                            assigned_server_profile_uri))
 
 
 class NodeAlreadyHasPortForThisMacAddress(Exception):

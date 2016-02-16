@@ -21,7 +21,6 @@ import mock
 import unittest
 
 from ironic_oneviewd import facade
-from ironic_oneviewd import sync_exceptions as exceptions
 from ironic_oneviewd.node_manager.manage import NodeManager
 from ironic_oneviewd.node_manager import manage
 
@@ -119,7 +118,6 @@ class TestIronicOneviewd(unittest.TestCase):
         node_manager = NodeManager(FAKE_CONFIG_CLIENT)
         node_manager.manage_node_provision_state(fake_node)
         mock_take_manageable_state_actions.assert_called_with(fake_node)
-
 
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
@@ -247,57 +245,6 @@ class TestIronicOneviewd(unittest.TestCase):
         )
 
         mock_log.assert_called_with(msg)
-
-    @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
-    @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
-    @mock.patch.object(facade.Facade, 'set_node_provision_state')
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
-    @mock.patch.object(facade.Facade, 'get_server_profile')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
-    def test_throws_exception_when_hardware_already_has_server_profile_applied(
-        self, mock_apply_server_profile, mock_facade, mock_get_server_profile,
-        mock_log, mock_set_node_provision_state,
-        mock_get_server_profile_assigned_to_sh,
-        mock_get_port_list_by_mac
-    ):
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
-
-        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
-        fake_node.provision_state = 'enroll'
-
-        info = {'server_hardware_uri': '/rest/server-hardware/123'}
-        fake_node.driver_info = info
-        mock.patch.dict(fake_node.driver_info, info, clear=True)
-
-        capabilities = {'capabilities':
-                        "server_profile_template_uri:"
-                        "/rest/server-profile-templates/123"}
-
-        server_profile = {'connections': [
-            {'mac': '01:23:45:67:89:ab', 'boot': {'priority': 'primary'}}
-        ]}
-
-        mock_get_server_profile.return_value = server_profile
-        mocked_facade.get_server_profile = mock_get_server_profile
-
-        fake_node.properties = capabilities
-        mock.patch.dict(fake_node.properties, capabilities, clear=True)
-
-        assigned_server_profile_uri = '/rest/server-profiles/123'
-        mock_get_server_profile_assigned_to_sh.return_value = \
-            assigned_server_profile_uri
-        mocked_facade.get_server_profile_assigned_to_sh = \
-            mock_get_server_profile_assigned_to_sh
-
-        msg = "Server Hardware %s already has a Server Profile %s assigned"                    % ('/rest/server-hardware/123', '/rest/server-profiles/123')
-
-        node_manager.manage_node_provision_state(fake_node)
-
-        mock_log.assert_called_with(msg)
-
 
     @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')

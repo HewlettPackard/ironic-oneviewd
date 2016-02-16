@@ -36,6 +36,7 @@ SUPPORTED_DRIVERS = ["agent_pxe_oneview",
                      "iscsi_pxe_oneview",
                      "fake_oneview"]
 
+
 class NodeManager:
 
     def __init__(self, conf_client):
@@ -55,8 +56,8 @@ class NodeManager:
         )
 
         nodes = [node for node in ironic_nodes
-                if node.driver in SUPPORTED_DRIVERS
-                if node.maintenance == False]
+                 if node.driver in SUPPORTED_DRIVERS
+                 if node.maintenance is False]
 
         workers = min(self.max_workers, len(nodes))
 
@@ -161,9 +162,9 @@ class NodeManager:
             if port_obj['node_uuid'] != node.uuid:
                 self.facade.create_node_port(node.uuid, server_profile_mac)
             else:
-               raise exceptions.NodeAlreadyHasPortForThisMacAddress(
-                   server_profile_mac
-               )
+                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
+                    server_profile_mac
+                )
 
     def server_hardware_uri_from_node(self, node):
         return node.driver_info.get(
