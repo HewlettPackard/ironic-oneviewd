@@ -43,7 +43,7 @@ class NodeManager:
         self.conf_client = conf_client
         self.facade = facade.Facade(conf_client)
         self.max_workers = int(
-            self.conf_client.DEFAULT.thread_pool_max_workers
+            self.conf_client.DEFAULT.rpc_thread_pool_size
         )
 
     def pull_ironic_nodes(self):

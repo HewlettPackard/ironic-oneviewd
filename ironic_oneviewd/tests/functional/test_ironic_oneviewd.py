@@ -48,7 +48,7 @@ class FakeIronicNode(object):
 
 class FakeConfHelper(object):
     def __init__(self, max_workers):
-        self.thread_pool_max_workers = max_workers
+        self.rpc_thread_pool_size = max_workers
 
 
 class FakeConfClient(object):

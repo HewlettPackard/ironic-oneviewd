@@ -41,7 +41,7 @@ If you prefer to create your own configuration file, it should look like this::
 
     [DEFAULT]
     retry_interval=<retry interval in seconds>
-    thread_pool_max_workers = <number of workers in the thread pool>
+    rpc_thread_pool_size = <thread pool size>
 
     [ironic]
     admin_user=<your admin user name>

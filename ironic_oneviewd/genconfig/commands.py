@@ -28,11 +28,12 @@ def do_genconfig(args):
     """
 
     print("========= DEFAULT ========")
-    retry_interval = input("Type the retry interval for daemon manage the nodes, e.g., 10, for 10 seconds: ")
+    retry_interval = input("Type the retry interval for daemon manage the "
+                           "nodes, e.g., 10, for 10 seconds: ")
     retry_interval = retry_interval if retry_interval else "300"
-    thread_pool_max_workers = input("Type the value for max workers "
-                                    "in thread pool: ")
-    thread_pool_max_workers = thread_pool_max_workers if thread_pool_max_workers else "20"
+    rpc_thread_pool_size = input("Type the value for max workers "
+                                 "in thread pool: ")
+    rpc_thread_pool_size = rpc_thread_pool_size if rpc_thread_pool_size else "20"
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")
@@ -62,7 +63,7 @@ def do_genconfig(args):
 
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
-    config.set("DEFAULT", "thread_pool_max_workers", thread_pool_max_workers)
+    config.set("DEFAULT", "rpc_thread_pool_size", rpc_thread_pool_size)
     config.add_section("openstack")
     config.set("openstack", "auth_url", openstack_auth_url)
     config.set("openstack", "admin_user", openstack_username)
