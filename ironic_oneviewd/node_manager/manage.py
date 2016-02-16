@@ -46,6 +46,9 @@ class NodeManager:
         self.max_workers = int(
             self.conf_client.DEFAULT.rpc_thread_pool_size
         )
+        self.executor = futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        )
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
@@ -59,10 +62,7 @@ class NodeManager:
                  if node.driver in SUPPORTED_DRIVERS
                  if node.maintenance is False]
 
-        workers = min(self.max_workers, len(nodes))
-
-        with futures.ThreadPoolExecutor(max_workers=workers) as executor:
-            executor.map(self.manage_node_provision_state, nodes)
+        self.executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
         if node.provision_state == ENROLL_PROVISION_STATE:
