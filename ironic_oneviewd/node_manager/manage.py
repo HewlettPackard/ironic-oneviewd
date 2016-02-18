@@ -82,20 +82,22 @@ class NodeManager:
             )
         except exceptions.ServerHardwareAlreadyHasServerProfileException as ex:
             LOG.error(ex.message)
-
+            return
         try:
             self.apply_node_port_configuration(
                 node
             )
         except exceptions.NoBootableConnectionFoundException as ex:
             LOG.error(ex.message)
+            return
         except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
             LOG.error(ex.message)
-
+            return
         try:
             self.facade.set_node_provision_state(node, 'manage')
         except Exception as ex:
             LOG.error(ex.message)
+            return
 
     def take_manageable_state_actions(self, node):
         LOG.info(
