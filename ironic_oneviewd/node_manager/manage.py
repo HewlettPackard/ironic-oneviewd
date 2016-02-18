@@ -24,6 +24,7 @@ from ironic_oneviewd import facade
 from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import sync_exceptions as exceptions
 from ironic_oneviewd.openstack.common._i18n import _
+from oneview_client import client
 
 
 LOG = logging.getLogger(__name__)
@@ -49,6 +50,18 @@ class NodeManager:
         self.executor = futures.ThreadPoolExecutor(
             max_workers=self.max_workers
         )
+        kwargs = {
+            'username': conf_client.oneview.username,
+            'password': conf_client.oneview.password,
+            'manager_url': conf_client.oneview.manager_url,
+            'allow_insecure_connections': False,
+            'tls_cacert_file': ''
+        }
+        if conf_client.oneview.allow_insecure_connections.lower() == 'true':
+            kwargs['allow_insecure_connections'] = True
+        if conf_client.oneview.tls_cacert_file:
+            kwargs['tls_cacert_file'] = conf_client.oneview.tls_cacert_file
+        self.oneview_client = client.Client(**kwargs)
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
@@ -226,3 +239,44 @@ class NodeManager:
                     _("Malformed capabilities value: %s") % capability
                 )
         return capabilities_dict
+
+    def old_take_enroll_state_actions(self, node):
+        # TODO (sinval): temos de validar se node_capabilities existem
+        # TODO (sinval): validar se essas coisas sao None
+        node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
+        node_capabilities = self.capabilities_to_dict(
+            node.properties.get('capabilities')
+        )
+        node_server_profile_template_uri = node_capabilities.get(
+            'server_profile_template_uri'
+        )
+        server_hardware_dict = self.facade.get_server_hardware(
+            node_server_hardware_uri
+        )
+        sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
+        if sh_server_profile_uri is not None:
+            LOG.error("The Server Hardware already has a "
+                      "Server Profile applied.")
+        else:
+            self.apply_enroll_node_configuration(
+                node_server_hardware_uri,
+                node_server_profile_template_uri,
+                node.uuid
+            )
+            self.facade.set_node_provision_state(node, 'manage')
+
+    def old_apply_enroll_node_configuration(self, server_hardware_uri,
+                                            server_profile_template_uri,
+                                            node_uuid):
+        server_profile_name = "Ironic [%s]" % (node_uuid)
+        sp_applied_uri = self.facade.\
+            generate_and_assign_server_profile_from_server_profile_template(
+                server_profile_template_uri, server_profile_name,
+                server_hardware_uri)
+        sh_uuid = server_hardware_uri[server_hardware_uri.rfind("/") + 1:]
+        mac = self.oneview_client.get_server_hardware_mac(sh_uuid)
+        self.facade.create_node_port(node_uuid, mac)
+        # TODO(sinval) config volumes (SAN storage)
+
+    def old_take_manageable_state_actions(self, node):
+        self.facade.set_node_provision_state(node, 'provide')
