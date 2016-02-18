@@ -28,10 +28,10 @@ def do_genconfig(args):
     """
 
     print("========= DEFAULT ========")
-    retry_interval = input("Type the retry interval for daemon manage the "
-                           "nodes, e.g., 10, for 10 seconds: ")
+    retry_interval = input("Type the polling interval in seconds for daemon "
+                           "manage the nodes, e.g., 300 for every 5 minutes: ")
     retry_interval = retry_interval if retry_interval else "300"
-    rpc_thread_pool_size = input("Type the value for thread pool size: ")
+    rpc_thread_pool_size = input("Type the size of the RPC thread pool: ")
     rpc_thread_pool_size = rpc_thread_pool_size if rpc_thread_pool_size else "20"
 
     print("========= Openstack ========= ")
@@ -39,8 +39,8 @@ def do_genconfig(args):
     openstack_username = input("Type your Openstack username: ")
     openstack_tenant = input("Type your Openstack user's tenant name: ")
     openstack_password = getpass.getpass("Type your Openstack user's password: ")
-    openstack_insecure = input("Would you like the connections with Openstack "
-                               "to be insecure? [y/N]: ") or "N"
+    openstack_insecure = input("Would you like to allow insecure connections "
+                               "to OpenStack? [y/N]: ") or "N"
     openstack_insecure = 'True' if openstack_insecure.lower() == 'y' else 'False'
     default_deploy_kernel = input("Type in the default deploy keynel image "
                                   "ID on Glance: ")
