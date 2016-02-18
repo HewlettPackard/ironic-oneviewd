@@ -23,6 +23,7 @@ from oslo_log import log as logging
 from ironic_oneviewd import facade
 from ironic_oneviewd import sync_exceptions
 from ironic_oneviewd.openstack.common._i18n import _
+from oneview_client import client
 
 LOG = logging.getLogger(__name__)
 
@@ -39,6 +40,18 @@ class NodeManager:
 
         self.conf_client = conf_client
         self.facade = facade.Facade(conf_client)
+        kwargs = {
+            'username': conf_client.oneview.username,
+            'password': conf_client.oneview.password,
+            'manager_url': conf_client.oneview.manager_url,
+            'allow_insecure_connections': False,
+            'tls_cacert_file': ''
+        }
+        if conf_client.oneview.allow_insecure_connections.lower() == 'true':
+            kwargs['allow_insecure_connections'] = True
+        if conf_client.oneview.tls_cacert_file:
+            kwargs['tls_cacert_file'] = conf_client.oneview.tls_cacert_file
+        self.oneview_client = client.Client(**kwargs)
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
@@ -115,10 +128,9 @@ class NodeManager:
             generate_and_assign_server_profile_from_server_profile_template(
                 server_profile_template_uri, server_profile_name,
                 server_hardware_uri)
-
-        sp_dict = self.facade.get_server_profile(sp_applied_uri)
-        server_profile_mac = sp_dict.get('connections')[0].get('mac')
-        self.facade.create_node_port(node_uuid, server_profile_mac)
+        sh_uuid = server_hardware_uri[server_hardware_uri.rfind("/") + 1:]
+        mac = self.oneview_client.get_server_hardware_mac(sh_uuid)
+        self.facade.create_node_port(node_uuid, mac)
         # TODO(sinval) config volumes (SAN storage)
 
     def take_manageable_state_actions(self, node):
