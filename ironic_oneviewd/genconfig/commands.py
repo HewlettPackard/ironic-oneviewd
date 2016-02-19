@@ -28,7 +28,7 @@ def do_genconfig(args):
     """
 
     print("========= DEFAULT ========")
-    retry_interval = input("Type the polling interval in seconds for daemon "
+    retry_interval = input("Type the polling interval in seconds for daemon to "
                            "manage the nodes, e.g., 300 for every 5 minutes: ")
     retry_interval = retry_interval if retry_interval else "300"
     rpc_thread_pool_size = input("Type the size of the RPC thread pool: ")
@@ -36,8 +36,8 @@ def do_genconfig(args):
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")
-    openstack_username = input("Type your Openstack username: ")
-    openstack_tenant = input("Type your Openstack user's tenant name: ")
+    openstack_username = input("Type your OpenStack username: ")
+    openstack_tenant = input("Type your OpenStack user's tenant name: ")
     openstack_password = getpass.getpass("Type your Openstack user's password: ")
     openstack_insecure = input("Would you like to allow insecure connections "
                                "to OpenStack? [y/N]: ") or "N"
@@ -63,6 +63,7 @@ def do_genconfig(args):
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
     config.set("DEFAULT", "rpc_thread_pool_size", rpc_thread_pool_size)
+
     config.add_section("openstack")
     config.set("openstack", "auth_url", openstack_auth_url)
     config.set("openstack", "admin_user", openstack_username)
@@ -72,18 +73,21 @@ def do_genconfig(args):
     config.set("openstack", "default_deploy_kernel_id", default_deploy_kernel)
     config.set("openstack", "default_deploy_ramdisk_id", default_deploy_ramdisk)
     config.set("openstack", "default_driver", ironic_default_driver)
+
     config.add_section("oneview")
     config.set("oneview", "manager_url", oneview_manager_url)
     config.set("oneview", "username", oneview_username)
     config.set("oneview", "password", oneview_password)
     config.set("oneview", "allow_insecure_connections", oneview_insecure)
 
-    filename = input("Type the path to the new configuration file [%s]: "
+    filename = input("Type the path of the new configuration file [%s]: "
                      % args.config_file) or args.config_file
     full_filename = os.path.realpath(os.path.expanduser(filename))
     directory = os.path.dirname(full_filename)
+
     if not os.path.exists(directory):
         os.makedirs(directory)
+
     with open(full_filename, 'w') as configfile:
         config.write(configfile)
         print("======\nFile created successfully on '%s'!\n======" % filename)
