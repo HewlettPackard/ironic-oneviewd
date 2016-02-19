@@ -18,7 +18,7 @@
 
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import sync_exceptions
-import oneview_client
+import dep_oneview_client
 
 
 REQUIRED_ON_PROPERTIES = {
@@ -32,7 +32,7 @@ REQUIRED_ON_EXTRAS = {
 
 
 def node_has_server_profile(driver_info):
-    server_hardware = oneview_client.get_server_hardware(driver_info)
+    server_hardware = dep_oneview_client.get_server_hardware(driver_info)
     server_profile_uri = server_hardware.get("serverProfileUri")
     return server_profile_uri is not None
 

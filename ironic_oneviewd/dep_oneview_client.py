@@ -85,8 +85,6 @@ class OneViewRequestAPI:
         except requests.RequestException as ex:
             LOG.error(_LE("Can't connect to OneView: %s")
                       % (str(ex.message).split(':')[-1]))
-            LOG.error(("Can't connect to OneView: %s")
-                      % (str(ex.message).split(':')[-1]))
             raise exception.OneViewConnectionError(
                 "Can't connect to OneView: %s" % str(ex.message))
 
@@ -103,7 +101,7 @@ class OneViewRequestAPI:
         headers = {'content-type': 'application/json'}
         verify_status = self._get_verify_connection_option()
         if verify_status is False:
-            LOG.warn('Using insecure connection')
+            LOG.warn(_('Using insecure connection'))
         json_response = None
         repeat = True
         while repeat:
@@ -132,10 +130,9 @@ class OneViewRequestAPI:
             else:
                 time.sleep(10)
                 repeat = True
-            LOG.debug("Conflict contacting OneView: ", response_json)
+            LOG.debug(_("Conflict contacting OneView: "), response_json)
         elif status in (404, 500):
             LOG.error(_LE("Error contacting OneView: "), response_json)
-            LOG.error(("Error contacting OneView: "), response_json)
         elif status not in (200, 202):
             LOG.warn("Status not recognized:", status, response_json)
         return repeat

@@ -25,12 +25,12 @@ import argparse
 import sys
 import six
 
-from ironic_oneviewd.openstack.common import cliutils
-from ironic_oneviewd.openstack.common._i18n import _
 from oslo_utils import encodeutils
 
-from ironic_oneviewd.node_manager import commands as oneviewd_commands
 from ironic_oneviewd.genconfig import commands as genconfig_commands
+from ironic_oneviewd.node_manager import commands as oneviewd_commands
+from ironic_oneviewd.openstack.common import cliutils
+from ironic_oneviewd.openstack.common._i18n import _
 
 
 VERSION = '1.0'

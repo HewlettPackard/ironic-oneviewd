@@ -16,7 +16,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ironic_oneviewd.oneview_client import get_oneview_client
+from ironic_oneviewd.dep_oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
 
 
