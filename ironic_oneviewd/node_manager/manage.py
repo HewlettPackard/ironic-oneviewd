@@ -18,11 +18,14 @@
 
 import six
 
-from oslo_log import log as logging
 
 from ironic_oneviewd import facade
 from ironic_oneviewd import sync_exceptions
 from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd.openstack.common._i18n import _LE
+from ironic_oneviewd.openstack.common._i18n import _LI
+from ironic_oneviewd.openstack.common._i18n import _LW
+from ironic_oneviewd import service_logging as logging
 from oneview_client import client
 
 LOG = logging.getLogger(__name__)
@@ -61,7 +64,7 @@ class NodeManager:
                     self.manage_node_provision_state(node)
                 except Exception as ex:
                     print('Something went wrong managing the '
-                          'node: %s' % ex.message)
+                          'node: %s' % ex)
 
     def manage_node_provision_state(self, node):
         provision_state = node.provision_state
@@ -99,6 +102,8 @@ class NodeManager:
         # TODO (sinval): temos de validar se node_capabilities existem
         # TODO (sinval): validar se essas coisas sao None
         node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
+        # TODO (thiagop): why this doesn't exists?
+        node_server_profile_uri = node.driver_info.get('server_profile_uri')
         node_capabilities = self.capabilities_to_dict(
             node.properties.get('capabilities')
         )
@@ -109,9 +114,12 @@ class NodeManager:
             node_server_hardware_uri
         )
         sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
-        if sh_server_profile_uri is not None:
-            LOG.error("The Server Hardware already has a "
-                      "Server Profile applied.")
+        # TODO (thiagop): and wasn't applied by me...
+        if(sh_server_profile_uri is not None and
+           sh_server_profile_uri != node_server_profile_uri):
+            LOG.warning(_LW("The Server Hardware '%s' already has a "
+                        "Server Profile applied."),
+                        server_hardware_dict.get("uuid"))
         else:
             self.apply_enroll_node_configuration(
                 node_server_hardware_uri,
@@ -128,6 +136,7 @@ class NodeManager:
             generate_and_assign_server_profile_from_server_profile_template(
                 server_profile_template_uri, server_profile_name,
                 server_hardware_uri)
+        # TODO(thiagop): update node with SP applied
         sh_uuid = server_hardware_uri[server_hardware_uri.rfind("/") + 1:]
         mac = self.oneview_client.get_server_hardware_mac(sh_uuid)
         self.facade.create_node_port(node_uuid, mac)
