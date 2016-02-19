@@ -82,7 +82,11 @@ class NodeManager:
             )
         except exceptions.ServerHardwareAlreadyHasServerProfileException as ex:
             LOG.error(ex.message)
-            return
+            applied = self.server_hardware_has_server_profile_applied(node)
+            LOG.info("Has server profile applied %s" % applied)
+            if not applied:
+                return
+
         try:
             self.apply_node_port_configuration(
                 node
@@ -93,6 +97,7 @@ class NodeManager:
         except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
             LOG.error(ex.message)
             return
+
         try:
             self.facade.set_node_provision_state(node, 'manage')
         except Exception as ex:
@@ -109,6 +114,15 @@ class NodeManager:
             self.facade.set_node_provision_state(node, 'provide')
         except Exception as ex:
             LOG.error(ex.message)
+
+    def server_hardware_has_server_profile_applied(self, node):
+        server_hardware_uri = self.server_hardware_uri_from_node(
+            node
+        )
+        profile_applied = self.facade.is_server_profile_applied_on_server_hardware(
+            server_hardware_uri
+        )
+        return profile_applied
 
     def apply_server_profile(self, node):
         assigned_server_profile_uri = self.server_profile_uri_from_node(

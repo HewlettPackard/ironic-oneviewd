@@ -48,6 +48,9 @@ class Facade(object):
     def set_node_provision_state(self, node, state):
         return self.ironicclient.node.set_provision_state(node.uuid, state)
 
+    def get_port_list_by_node_uuid(self, node_uuid):
+        return self.ironicclient.port.get(node_id=node_uuid)
+
     def get_port(self, port_id):
         return self.ironicclient.port.get(port_id)
 
@@ -70,6 +73,11 @@ class Facade(object):
 
     def get_server_hardware(self, uri):
         return self.oneviewclient.server_hardware.get_server_hardware(uri)
+
+    def is_server_profile_applied_on_server_hardware(self, uri):
+        return self.oneviewclient.server_hardware.is_server_profile_applied_on_server_hardware(
+            uri
+        )
 
     def get_server_profile_assigned_to_sh(self, server_hardware_uri):
         return self.oneviewclient.server_hardware.get_server_profile_assigned_to_sh(server_hardware_uri)

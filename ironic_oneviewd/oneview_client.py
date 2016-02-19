@@ -210,6 +210,10 @@ class OneViewServerHardwareAPI(OneViewRequestAPI):
                 'server_profile_uri': server_hardware.get('serverProfileUri')
                 }
 
+    def is_server_profile_applied_on_server_hardware(self, server_hardware_uri):
+        server_hardware_json = self.get_server_hardware(server_hardware_uri)
+        return server_hardware_json.get('state') == 'ProfileApplied'
+
 
 class OneViewServerProfileTemplateAPI(OneViewRequestAPI):
     def generate_server_profile_from_server_profile_template(
