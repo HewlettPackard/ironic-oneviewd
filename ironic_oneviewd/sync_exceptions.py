@@ -68,3 +68,52 @@ class OneViewServerProfileAssociatedError(Exception):
 class OneViewErrorStateSettingPowerState(Exception):
     message = _("Get Error State in OneView trying to set power state of "
                 "Server Hardware")
+
+
+class NodeTransitionStateBaseException(Exception):
+
+    def __init__(self, node, state):
+        Exception.__init__(self,
+                           "Error while trasitioning the "
+                           "node %s to %s" % (node.uuid, state))
+
+
+class NodeTransitionToManageableStateException(
+    NodeTransitionStateBaseException):
+
+    def __init__(self, node):
+        NodeTransitionStateBaseException.__init__(self, node, 'manageable')
+
+
+class NodeTransitionToAvailableStateException(
+    NodeTransitionStateBaseException):
+
+    def __init__(self, node):
+        NodeTransitionStateBaseException.__init__(self, node, 'available')
+
+
+class NoBootableConnectionFoundException(Exception):
+
+    def __init__(self, server_profile_uri):
+        Exception.__init__(self,
+                           "No bootable connection was found for "
+                           "Server Profile %s" %
+                           (server_profile_uri))
+
+
+class ServerHardwareAlreadyHasServerProfileException(Exception):
+
+    def __init__(self, node_server_profile_uri, assigned_server_profile_uri):
+        Exception.__init__(self,
+                           "Server Hardware %s already has a "
+                           "Server Profile %s assigned" %
+                           (node_server_profile_uri,
+                            assigned_server_profile_uri))
+
+
+class NodeAlreadyHasPortForThisMacAddress(Exception):
+
+    def __init__(self, mac):
+        Exception.__init__(self,
+                           "A port with MAC address %s was already "
+                           "created for this node" % (mac))

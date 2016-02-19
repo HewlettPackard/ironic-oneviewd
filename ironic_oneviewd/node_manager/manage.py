@@ -18,46 +18,192 @@
 
 import six
 
-from oslo_log import log as logging
+from concurrent import futures
 
 from ironic_oneviewd import facade
-from ironic_oneviewd import sync_exceptions
+from ironic_oneviewd import service_logging as logging
+from ironic_oneviewd import sync_exceptions as exceptions
 from ironic_oneviewd.openstack.common._i18n import _
 
+
 LOG = logging.getLogger(__name__)
+
 
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 
+SUPPORTED_DRIVERS = ["agent_pxe_oneview",
+                     "iscsi_pxe_oneview",
+                     "fake_oneview"]
+
 
 class NodeManager:
-    def __init__(self, conf_client):
 
-        self.supported_drivers = {"agent_pxe_oneview",
-                                  "iscsi_pxe_oneview",
-                                  "fake_oneview"}
+    def __init__(self, conf_client):
 
         self.conf_client = conf_client
         self.facade = facade.Facade(conf_client)
+        self.max_workers = int(
+            self.conf_client.DEFAULT.rpc_thread_pool_size
+        )
+        self.executor = futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        )
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
-        for node in ironic_nodes:
-            if node.driver in self.supported_drivers:
-                try:
-                    self.manage_node_provision_state(node)
-                except Exception as ex:
-                    print('Something went wrong managing the '
-                          'node: %s' % ex.message)
+
+        LOG.info(
+            "%(nodes)s Ironic nodes has been taken." %
+            {"nodes": len(ironic_nodes)}
+        )
+
+        nodes = [node for node in ironic_nodes
+                 if node.driver in SUPPORTED_DRIVERS
+                 if node.maintenance is False]
+
+        self.executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
-        provision_state = node.provision_state
-        if node.maintenance:
-            return
-        elif provision_state == ENROLL_PROVISION_STATE:
+        if node.provision_state == ENROLL_PROVISION_STATE:
             self.take_enroll_state_actions(node)
-        elif provision_state == MANAGEABLE_PROVISION_STATE:
+        elif node.provision_state == MANAGEABLE_PROVISION_STATE:
             self.take_manageable_state_actions(node)
+
+    def take_enroll_state_actions(self, node):
+        LOG.info(
+            "Taking enroll state actions for node %(node)s." %
+            {'node': node.uuid}
+        )
+
+        try:
+            self.apply_server_profile(
+                node
+            )
+        except exceptions.ServerHardwareAlreadyHasServerProfileException as ex:
+            LOG.error(ex.message)
+            applied = self.server_hardware_has_server_profile_applied(node)
+            LOG.info("Has server profile applied %s" % applied)
+            if not applied:
+                return
+
+        try:
+            self.apply_node_port_configuration(
+                node
+            )
+        except exceptions.NoBootableConnectionFoundException as ex:
+            LOG.error(ex.message)
+            return
+        except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
+            LOG.error(ex.message)
+            return
+
+        try:
+            self.facade.set_node_provision_state(node, 'manage')
+        except Exception as ex:
+            LOG.error(ex.message)
+            return
+
+    def take_manageable_state_actions(self, node):
+        LOG.info(
+            "Taking manageable state actions for node %(node)s." %
+            {'node': node.uuid}
+        )
+
+        try:
+            self.facade.set_node_provision_state(node, 'provide')
+        except Exception as ex:
+            LOG.error(ex.message)
+
+    def server_hardware_has_server_profile_applied(self, node):
+        server_hardware_uri = self.server_hardware_uri_from_node(
+            node
+        )
+        profile_applied = self.facade.is_server_profile_applied_on_server_hardware(
+            server_hardware_uri
+        )
+        return profile_applied
+
+    def apply_server_profile(self, node):
+        assigned_server_profile_uri = self.server_profile_uri_from_node(
+            node
+        )
+        server_profile_template_uri = self.server_profile_template_uri_from_node(
+            node
+        )
+        server_hardware_uri = self.server_hardware_uri_from_node(
+            node
+        )
+        server_profile_name = "Ironic [%s]" % (node.uuid)
+
+        if assigned_server_profile_uri is None:
+            assigned_server_profile_uri = self.facade.\
+                generate_and_assign_server_profile_from_server_profile_template(
+                    server_profile_template_uri,
+                    server_profile_name,
+                    server_hardware_uri
+                )
+        else:
+            raise exceptions.ServerHardwareAlreadyHasServerProfileException(
+                server_hardware_uri,
+                assigned_server_profile_uri
+            )
+
+    def apply_node_port_configuration(self, node):
+        assigned_server_profile_uri = self.server_profile_uri_from_node(
+            node
+        )
+        server_profile_dict = self.facade.get_server_profile(
+            assigned_server_profile_uri
+        )
+
+        primary_boot_connection = None
+        for connection in server_profile_dict.get('connections'):
+            boot = connection.get('boot')
+            if boot is not None and boot.get('priority').lower() == 'primary':
+                primary_boot_connection = connection
+
+        if primary_boot_connection is None:
+            raise exceptions.NoBootableConnectionFoundException(
+                assigned_server_profile_uri
+            )
+
+        server_profile_mac = primary_boot_connection.get('mac')
+
+        port_list_by_mac = self.facade.get_port_list_by_mac(server_profile_mac)
+        if not port_list_by_mac:
+            self.facade.create_node_port(node.uuid, server_profile_mac)
+        else:
+            port_obj = self.facade.get_port(port_list_by_mac[0]['uuid'])
+            if port_obj['node_uuid'] != node.uuid:
+                self.facade.create_node_port(node.uuid, server_profile_mac)
+            else:
+                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
+                    server_profile_mac
+                )
+
+    def server_hardware_uri_from_node(self, node):
+        return node.driver_info.get(
+            'server_hardware_uri'
+        )
+
+    def server_profile_template_uri_from_node(self, node):
+        node_capabilities = self.capabilities_to_dict(
+            node.properties.get('capabilities')
+        )
+        node_server_profile_template_uri = node_capabilities.get(
+            'server_profile_template_uri'
+        )
+        return node_server_profile_template_uri
+
+    def server_profile_uri_from_node(self, node):
+        node_server_hardware_uri = self.server_hardware_uri_from_node(
+            node
+        )
+        uri = self.facade.get_server_profile_assigned_to_sh(
+            node_server_hardware_uri
+        )
+        return uri
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
@@ -68,7 +214,7 @@ class NodeManager:
         capabilities_dict = {}
         if capabilities:
             if not isinstance(capabilities, six.string_types):
-                raise sync_exceptions.InvalidParameterValue(
+                raise exceptions.InvalidParameterValue(
                     _("Value of 'capabilities' must be string. Got %s")
                     % type(capabilities))
             try:
@@ -76,50 +222,7 @@ class NodeManager:
                     key, value = capability.split(':')
                     capabilities_dict[key] = value
             except ValueError:
-                raise sync_exceptions.InvalidParameterValue(
+                raise exceptions.InvalidParameterValue(
                     _("Malformed capabilities value: %s") % capability
                 )
-
         return capabilities_dict
-
-    def take_enroll_state_actions(self, node):
-        # TODO (sinval): temos de validar se node_capabilities existem
-        # TODO (sinval): validar se essas coisas sao None
-        node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
-        node_capabilities = self.capabilities_to_dict(
-            node.properties.get('capabilities')
-        )
-        node_server_profile_template_uri = node_capabilities.get(
-            'server_profile_template_uri'
-        )
-        server_hardware_dict = self.facade.get_server_hardware(
-            node_server_hardware_uri
-        )
-        sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
-        if sh_server_profile_uri is not None:
-            LOG.error("The Server Hardware already has a "
-                      "Server Profile applied.")
-        else:
-            self.apply_enroll_node_configuration(
-                node_server_hardware_uri,
-                node_server_profile_template_uri,
-                node.uuid
-            )
-            self.facade.set_node_provision_state(node, 'manage')
-
-    def apply_enroll_node_configuration(self, server_hardware_uri,
-                                        server_profile_template_uri,
-                                        node_uuid):
-        server_profile_name = "Ironic [%s]" % (node_uuid)
-        sp_applied_uri = self.facade.\
-            generate_and_assign_server_profile_from_server_profile_template(
-                server_profile_template_uri, server_profile_name,
-                server_hardware_uri)
-
-        sp_dict = self.facade.get_server_profile(sp_applied_uri)
-        server_profile_mac = sp_dict.get('connections')[0].get('mac')
-        self.facade.create_node_port(node_uuid, server_profile_mac)
-        # TODO(sinval) config volumes (SAN storage)
-
-    def take_manageable_state_actions(self, node):
-        self.facade.set_node_provision_state(node, 'provide')

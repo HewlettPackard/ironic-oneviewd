@@ -22,9 +22,13 @@ import retrying
 
 from builtins import input
 
+from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd.config import ConfClient
 from ironic_oneviewd.genconfig.commands import do_genconfig
 from ironic_oneviewd.node_manager.manage import NodeManager
+
+
+LOG = logging.getLogger(__name__)
 
 
 def do_manage_ironic_nodes(args):
@@ -59,6 +63,9 @@ def do_manage_ironic_nodes(args):
 
     @retrying.retry(wait_fixed=retry_interval_in_ms)
     def execute():
-        node_manager.pull_ironic_nodes()
+        try:
+            node_manager.pull_ironic_nodes()
+        except Exception as ex:
+            LOG.error(ex.message)
         raise Exception("Continue trying...")
     execute()

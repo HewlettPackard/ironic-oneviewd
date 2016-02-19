@@ -41,6 +41,7 @@ If you prefer to create your own configuration file, it should look like this::
 
     [DEFAULT]
     retry_interval=<retry interval in seconds>
+    rpc_thread_pool_size = <thread pool size>
 
     [ironic]
     admin_user=<your admin user name>

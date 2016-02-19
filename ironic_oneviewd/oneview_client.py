@@ -21,12 +21,12 @@ import time
 
 import requests
 from requests.packages import urllib3
-from oslo_log import log as logging
 
 from ironic_oneviewd import oneview_uri
 from ironic_oneviewd.openstack.common._i18n import _LE
 from ironic_oneviewd.openstack.common._i18n import _LI
 from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import sync_exceptions as exception
 
 
@@ -209,6 +209,10 @@ class OneViewServerHardwareAPI(OneViewRequestAPI):
                 'mac': mac_address,
                 'server_profile_uri': server_hardware.get('serverProfileUri')
                 }
+
+    def is_server_profile_applied_on_server_hardware(self, server_hardware_uri):
+        server_hardware_json = self.get_server_hardware(server_hardware_uri)
+        return server_hardware_json.get('state') == 'ProfileApplied'
 
 
 class OneViewServerProfileTemplateAPI(OneViewRequestAPI):
