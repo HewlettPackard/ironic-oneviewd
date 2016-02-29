@@ -284,7 +284,11 @@ class NodeManager:
                 server_hardware_uri)
         # TODO(thiagop): update node with SP applied
         sh_uuid = server_hardware_uri[server_hardware_uri.rfind("/") + 1:]
-        mac = self.oneview_client.get_server_hardware_mac(sh_uuid)
+        sh = self.oneview_client.get_server_hardware_by_uuid(sh_uuid)
+        try:
+            mac = sh.get_mac(index=0)
+        except:
+            mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
         self.facade.create_node_port(node_uuid, mac)
         # TODO(sinval) config volumes (SAN storage)
 
