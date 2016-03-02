@@ -130,7 +130,8 @@ class TestIronicOneviewd(unittest.TestCase):
     def test_applying_server_profile(
         self, mock_apply_server_profile, mock_facade, mock_get_server_profile,
         mock_create_node_port, mock_set_node_provision_state,
-        mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac):
+        mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac
+    ):
 
         mocked_facade = facade.Facade(None)
         node_manager = NodeManager(FAKE_CONFIG_CLIENT)

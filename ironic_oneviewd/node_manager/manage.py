@@ -17,6 +17,7 @@
 #    under the License.
 
 import six
+import traceback
 
 from concurrent import futures
 
@@ -108,17 +109,19 @@ class NodeManager:
             self.apply_node_port_configuration(
                 node
             )
+        except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
+            LOG.warning(ex.message)
         except exceptions.NoBootableConnectionFoundException as ex:
             LOG.error(ex.message)
             return
-        except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
-            LOG.error(ex.message)
+        except:
+            LOG.error(traceback.format_exc())
             return
 
         try:
             self.facade.set_node_provision_state(node, 'manage')
-        except Exception as ex:
-            LOG.error(ex.message)
+        except:
+            LOG.error(traceback.format_exc())
             return
 
     def take_manageable_state_actions(self, node):
@@ -175,28 +178,34 @@ class NodeManager:
         )
 
         primary_boot_connection = None
-        for connection in server_profile_dict.get('connections'):
-            boot = connection.get('boot')
-            if boot is not None and boot.get('priority').lower() == 'primary':
-                primary_boot_connection = connection
+        connections = server_profile_dict.get('connections')
+        if connections:
+            # MAC from ServerProfile
+            for connection in connections:
+                boot = connection.get('boot')
+                if (boot is not None and
+                   boot.get('priority').lower() == 'primary'):
+                    primary_boot_connection = connection
 
-        if primary_boot_connection is None:
-            raise exceptions.NoBootableConnectionFoundException(
-                assigned_server_profile_uri
-            )
-
-        server_profile_mac = primary_boot_connection.get('mac')
-
-        port_list_by_mac = self.facade.get_port_list_by_mac(server_profile_mac)
-        if not port_list_by_mac:
-            self.facade.create_node_port(node.uuid, server_profile_mac)
+            if primary_boot_connection is None:
+                raise exceptions.NoBootableConnectionFoundException(
+                    assigned_server_profile_uri
+                )
+            mac = primary_boot_connection.get('mac')
         else:
-            port_obj = self.facade.get_port(port_list_by_mac[0]['uuid'])
-            if port_obj['node_uuid'] != node.uuid:
-                self.facade.create_node_port(node.uuid, server_profile_mac)
+            server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+            mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
+
+        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
+        if not port_list_by_mac:
+            self.facade.create_node_port(node.uuid, mac)
+        else:
+            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
+            if port_obj.node_uuid != node.uuid:
+                self.facade.create_node_port(node.uuid, mac)
             else:
                 raise exceptions.NodeAlreadyHasPortForThisMacAddress(
-                    server_profile_mac
+                    mac
                 )
 
     def server_hardware_uri_from_node(self, node):
@@ -221,6 +230,13 @@ class NodeManager:
             node_server_hardware_uri
         )
         return uri
+
+    def uuid_from_uri(self, uri):
+        return uri.split("/")[-1]
+
+    def server_hardware_uuid_from_node(self, node):
+        uri = self.server_hardware_uri_from_node(node)
+        return self.uuid_from_uri(uri)
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
@@ -273,24 +289,3 @@ class NodeManager:
                 node.uuid
             )
             self.facade.set_node_provision_state(node, 'manage')
-
-    def old_apply_enroll_node_configuration(self, server_hardware_uri,
-                                            server_profile_template_uri,
-                                            node_uuid):
-        server_profile_name = "Ironic [%s]" % (node_uuid)
-        sp_applied_uri = self.facade.\
-            generate_and_assign_server_profile_from_server_profile_template(
-                server_profile_template_uri, server_profile_name,
-                server_hardware_uri)
-        # TODO(thiagop): update node with SP applied
-        sh_uuid = server_hardware_uri[server_hardware_uri.rfind("/") + 1:]
-        sh = self.oneview_client.get_server_hardware_by_uuid(sh_uuid)
-        try:
-            mac = sh.get_mac(index=0)
-        except:
-            mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
-        self.facade.create_node_port(node_uuid, mac)
-        # TODO(sinval) config volumes (SAN storage)
-
-    def old_take_manageable_state_actions(self, node):
-        self.facade.set_node_provision_state(node, 'provide')
