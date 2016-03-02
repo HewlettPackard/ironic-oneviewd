@@ -259,33 +259,3 @@ class NodeManager:
                     _("Malformed capabilities value: %s") % capability
                 )
         return capabilities_dict
-
-    def old_take_enroll_state_actions(self, node):
-        # TODO (sinval): temos de validar se node_capabilities existem
-        # TODO (sinval): validar se essas coisas sao None
-        node_server_hardware_uri = node.driver_info.get('server_hardware_uri')
-        # TODO (thiagop): why this doesn't exists?
-        node_server_profile_uri = node.driver_info.get('server_profile_uri')
-        node_capabilities = self.capabilities_to_dict(
-            node.properties.get('capabilities')
-        )
-        node_server_profile_template_uri = node_capabilities.get(
-            'server_profile_template_uri'
-        )
-        server_hardware_dict = self.facade.get_server_hardware(
-            node_server_hardware_uri
-        )
-        sh_server_profile_uri = server_hardware_dict.get('serverProfileUri')
-        # TODO (thiagop): and wasn't applied by me...
-        if(sh_server_profile_uri is not None and
-           sh_server_profile_uri != node_server_profile_uri):
-            LOG.warning(_LW("The Server Hardware '%s' already has a "
-                        "Server Profile applied."),
-                        server_hardware_dict.get("uuid"))
-        else:
-            self.apply_enroll_node_configuration(
-                node_server_hardware_uri,
-                node_server_profile_template_uri,
-                node.uuid
-            )
-            self.facade.set_node_provision_state(node, 'manage')
