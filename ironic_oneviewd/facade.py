@@ -19,6 +19,7 @@
 from ironic_oneviewd.dep_oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
 from oneview_client import client
+from oneview_client import exceptions as oneview_exceptions
 
 
 class Facade(object):
@@ -132,7 +133,7 @@ class Facade(object):
         try:
             # MAC from ServerHardware
             mac = sh.get_mac(index=0)
-        except:
+        except oneview_exceptions.OneViewException:
             # MAC from iLO
             mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
         return mac
