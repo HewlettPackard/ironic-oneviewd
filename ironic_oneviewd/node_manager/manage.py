@@ -17,6 +17,7 @@
 #    under the License.
 
 import six
+import traceback
 
 from concurrent import futures
 
@@ -24,6 +25,11 @@ from ironic_oneviewd import facade
 from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import sync_exceptions as exceptions
 from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd.openstack.common._i18n import _LE
+from ironic_oneviewd.openstack.common._i18n import _LI
+from ironic_oneviewd.openstack.common._i18n import _LW
+from ironic_oneviewd import service_logging as logging
+from oneview_client import client
 
 
 LOG = logging.getLogger(__name__)
@@ -49,6 +55,18 @@ class NodeManager:
         self.executor = futures.ThreadPoolExecutor(
             max_workers=self.max_workers
         )
+        kwargs = {
+            'username': conf_client.oneview.username,
+            'password': conf_client.oneview.password,
+            'manager_url': conf_client.oneview.manager_url,
+            'allow_insecure_connections': False,
+            'tls_cacert_file': ''
+        }
+        if conf_client.oneview.allow_insecure_connections.lower() == 'true':
+            kwargs['allow_insecure_connections'] = True
+        if conf_client.oneview.tls_cacert_file:
+            kwargs['tls_cacert_file'] = conf_client.oneview.tls_cacert_file
+        self.oneview_client = client.Client(**kwargs)
 
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
@@ -91,17 +109,19 @@ class NodeManager:
             self.apply_node_port_configuration(
                 node
             )
+        except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
+            LOG.warning(ex.message)
         except exceptions.NoBootableConnectionFoundException as ex:
             LOG.error(ex.message)
             return
-        except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
-            LOG.error(ex.message)
+        except:
+            LOG.error(traceback.format_exc())
             return
 
         try:
             self.facade.set_node_provision_state(node, 'manage')
-        except Exception as ex:
-            LOG.error(ex.message)
+        except:
+            LOG.error(traceback.format_exc())
             return
 
     def take_manageable_state_actions(self, node):
@@ -158,28 +178,34 @@ class NodeManager:
         )
 
         primary_boot_connection = None
-        for connection in server_profile_dict.get('connections'):
-            boot = connection.get('boot')
-            if boot is not None and boot.get('priority').lower() == 'primary':
-                primary_boot_connection = connection
+        connections = server_profile_dict.get('connections')
+        if connections:
+            # MAC from ServerProfile
+            for connection in connections:
+                boot = connection.get('boot')
+                if (boot is not None and
+                   boot.get('priority').lower() == 'primary'):
+                    primary_boot_connection = connection
 
-        if primary_boot_connection is None:
-            raise exceptions.NoBootableConnectionFoundException(
-                assigned_server_profile_uri
-            )
-
-        server_profile_mac = primary_boot_connection.get('mac')
-
-        port_list_by_mac = self.facade.get_port_list_by_mac(server_profile_mac)
-        if not port_list_by_mac:
-            self.facade.create_node_port(node.uuid, server_profile_mac)
+            if primary_boot_connection is None:
+                raise exceptions.NoBootableConnectionFoundException(
+                    assigned_server_profile_uri
+                )
+            mac = primary_boot_connection.get('mac')
         else:
-            port_obj = self.facade.get_port(port_list_by_mac[0]['uuid'])
-            if port_obj['node_uuid'] != node.uuid:
-                self.facade.create_node_port(node.uuid, server_profile_mac)
+            server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+            mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
+
+        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
+        if not port_list_by_mac:
+            self.facade.create_node_port(node.uuid, mac)
+        else:
+            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
+            if port_obj.node_uuid != node.uuid:
+                self.facade.create_node_port(node.uuid, mac)
             else:
                 raise exceptions.NodeAlreadyHasPortForThisMacAddress(
-                    server_profile_mac
+                    mac
                 )
 
     def server_hardware_uri_from_node(self, node):
@@ -204,6 +230,13 @@ class NodeManager:
             node_server_hardware_uri
         )
         return uri
+
+    def uuid_from_uri(self, uri):
+        return uri.split("/")[-1]
+
+    def server_hardware_uuid_from_node(self, node):
+        uri = self.server_hardware_uri_from_node(node)
+        return self.uuid_from_uri(uri)
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary

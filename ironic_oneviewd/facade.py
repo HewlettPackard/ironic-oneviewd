@@ -16,8 +16,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ironic_oneviewd.oneview_client import get_oneview_client
+from ironic_oneviewd.dep_oneview_client import get_oneview_client
 from ironic_oneviewd.openstack_client import get_ironic_client
+from oneview_client import client
+from oneview_client import exceptions as oneview_exceptions
 
 
 class Facade(object):
@@ -25,6 +27,19 @@ class Facade(object):
     def __init__(self, config):
         self.ironicclient = get_ironic_client(config)
         self.oneviewclient = get_oneview_client(config)
+
+        kwargs = {
+            'username': config.oneview.username,
+            'password': config.oneview.password,
+            'manager_url': config.oneview.manager_url,
+            'allow_insecure_connections': False,
+            'tls_cacert_file': ''
+        }
+        if config.oneview.allow_insecure_connections.lower() == 'true':
+            kwargs['allow_insecure_connections'] = True
+        if config.oneview.tls_cacert_file:
+            kwargs['tls_cacert_file'] = config.oneview.tls_cacert_file
+        self.oneview_client = client.Client(**kwargs)
 
     # =========================================================================
     # Ironic actions
@@ -112,3 +127,13 @@ class Facade(object):
     def unassign_server_profile(self, server_hardware_uri, server_profile_uri):
         return self.oneviewclient.server_profile.unassign_server_profile(
             server_hardware_uri, server_profile_uri)
+
+    def get_server_hardware_mac(self, uuid):
+        sh = self.oneview_client.get_server_hardware_by_uuid(uuid)
+        try:
+            # MAC from ServerHardware
+            mac = sh.get_mac(index=0)
+        except oneview_exceptions.OneViewException:
+            # MAC from iLO
+            mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
+        return mac
