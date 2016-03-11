@@ -132,7 +132,7 @@ class Facade(object):
         sh = self.oneview_client.get_server_hardware_by_uuid(uuid)
         try:
             # MAC from ServerHardware
-            mac = sh.get_mac(index=0)
+            mac = sh.get_mac(nic_index=0)
         except oneview_exceptions.OneViewException:
             # MAC from iLO
             mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
