@@ -82,9 +82,6 @@ Note that, in order to run this daemon, you only have to pass the
 configuration file previously created containing the required credentials
 and addresses.
 
-If the user wants to the daemon work correctly with Gen8 and Gen9 DL servers
-in general, the hardware needs to run version 4.2.3 of iLO, with Redfish.
-
 Tested platforms
 ================
 
@@ -106,4 +103,3 @@ in general, the hardware also needs to run version 4.2.3 of iLO, with Redfish.
 References
 ==========
 .. [1] HP OneView - http://www8.hp.com/us/en/business-solutions/converged-systems/oneview.html
-
