@@ -85,6 +85,24 @@ and addresses.
 If the user wants to the daemon work correctly with Gen8 and Gen9 DL servers
 in general, the hardware needs to run version 4.2.3 of iLO, with Redfish.
 
+Tested platforms
+================
+
+The OneView appliance used for testing was the OneView 2.0.
+
+The Enclosure used for testing was the ``BladeSystem c7000 Enclosure G2``.
+
+The daemon should work on HP Proliant Gen8 and Gen9 Servers supported by
+OneView 2.0 and above, or any hardware whose network can be managed by
+OneView's ServerProfile. It has been tested with the following servers:
+
+  - Proliant BL460c Gen8
+  - Proliant BL465c Gen8
+  - Proliant DL360 Gen9 (starting with python-oneviewclient 2.1.0)
+
+Notice here that to the daemon work correctly with Gen8 and Gen9 DL servers
+in general, the hardware also needs to run version 4.2.3 of iLO, with Redfish.
+
 References
 ==========
 .. [1] HP OneView - http://www8.hp.com/us/en/business-solutions/converged-systems/oneview.html
