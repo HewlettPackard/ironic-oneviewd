@@ -16,10 +16,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import importutils
+
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import sync_exceptions
-import dep_oneview_client
 
+client = importutils.try_import('oneview_client.client')
+oneview_states = importutils.try_import('oneview_client.states')
+oneview_exceptions = importutils.try_import('oneview_client.exceptions')
 
 REQUIRED_ON_PROPERTIES = {
     'server_hardware_type_uri': _("Server Hardware Type URI Required."),
@@ -31,10 +35,26 @@ REQUIRED_ON_EXTRAS = {
 }
 
 
-def node_has_server_profile(driver_info):
-    server_hardware = dep_oneview_client.get_server_hardware(driver_info)
-    server_profile_uri = server_hardware.get("serverProfileUri")
-    return server_profile_uri is not None
+def get_oneview_client(manager_url, username, password,
+                       allow_insecure_connections=False, tls_cacert_file='',
+                       max_polling_attempts=20):
+    """Generates an instance of the OneView client.
+
+    Generates an instance of the OneView client using the imported
+    oneview_client library.
+
+    :returns: an instance of the OneView client
+    """
+
+    oneview_client = client.Client(
+        manager_url=manager_url,
+        username=username,
+        password=password,
+        allow_insecure_connections=allow_insecure_connections,
+        tls_cacert_file=tls_cacert_file,
+        max_polling_attempts=max_polling_attempts
+    )
+    return oneview_client
 
 
 def verify_node_properties(node):

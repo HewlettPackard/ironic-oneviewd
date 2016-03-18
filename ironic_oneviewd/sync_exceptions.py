@@ -101,14 +101,12 @@ class NoBootableConnectionFoundException(Exception):
                            (server_profile_uri))
 
 
-class ServerHardwareAlreadyHasServerProfileException(Exception):
+class NodeAlreadyHasServerProfileAssignedException(Exception):
 
-    def __init__(self, node_server_profile_uri, assigned_server_profile_uri):
+    def __init__(self, node, server_profile_uri):
         Exception.__init__(self,
-                           "Server Hardware %s already has a "
-                           "Server Profile %s assigned" %
-                           (node_server_profile_uri,
-                            assigned_server_profile_uri))
+                           "Node %s has a Server Profile %s assigned" %
+                           (node.uuid, server_profile_uri))
 
 
 class NodeAlreadyHasPortForThisMacAddress(Exception):
@@ -117,3 +115,12 @@ class NodeAlreadyHasPortForThisMacAddress(Exception):
         Exception.__init__(self,
                            "A port with MAC address %s was already "
                            "created for this node" % (mac))
+
+
+class ServerProfileApplicationException(Exception):
+
+    def __init__(self, node):
+        Exception.__init__(self,
+                           "Error while trying to apply "
+                           "Server Profile for the node %s" %
+                           (node.uuid))
