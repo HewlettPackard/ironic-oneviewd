@@ -22,7 +22,7 @@ import traceback
 from concurrent import futures
 
 from ironic_oneviewd import facade
-from ironic_oneviewd import sync_exceptions as exceptions
+from ironic_oneviewd import exceptions
 from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd.openstack.common._i18n import _
 

@@ -16,10 +16,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from ironicclient import client as ironic_client
+
 from oslo_utils import importutils
 
 from ironic_oneviewd.openstack.common._i18n import _
-from ironic_oneviewd import sync_exceptions
+from ironic_oneviewd import exceptions
+from ironic_oneviewd import service_logging as logging
 
 client = importutils.try_import('oneview_client.client')
 oneview_states = importutils.try_import('oneview_client.states')
@@ -33,6 +36,29 @@ REQUIRED_ON_PROPERTIES = {
 REQUIRED_ON_EXTRAS = {
     'server_hardware_uri': _("Server Hardware URI. Required."),
 }
+
+IRONIC_API_VERSION = '1.11'
+
+LOG = logging.getLogger(__name__)
+
+
+def get_ironic_client(conf):
+    kwargs = {
+        'os_username': conf.openstack.admin_user,
+        'os_password': conf.openstack.admin_password,
+        'os_auth_url': conf.openstack.auth_url,
+        'os_tenant_name': conf.openstack.admin_tenant_name,
+        'os_ironic_api_version': IRONIC_API_VERSION,
+    }
+    if conf.openstack.insecure.lower() == 'true':
+        kwargs['insecure'] = True
+    if conf.openstack.ca_file:
+        kwargs['ca_file'] = conf.openstack.ca_file
+
+    LOG.debug("Using OpenStack credentials specified in the configuration "
+              "file to get Ironic Client")
+
+    return ironic_client.get_client(1, **kwargs)
 
 
 def get_oneview_client(manager_url, username, password,
@@ -61,7 +87,7 @@ def verify_node_properties(node):
     properties = node.properties.get('capabilities', '')
     for key in REQUIRED_ON_PROPERTIES:
         if key not in properties:
-            raise sync_exceptions.MissingParameterValue(
+            raise exceptions.MissingParameterValue(
                 _("Missing the following OneView data in node's "
                   "properties/capabilities: %s.") % key
             )
@@ -73,7 +99,7 @@ def verify_node_extra(node):
     extra = node.extra or {}
     for key in REQUIRED_ON_EXTRAS:
         if not extra.get(key):
-            raise sync_exceptions.MissingParameterValue(
+            raise exceptions.MissingParameterValue(
                 _("Missing the following OneView data in node's extra: %s.")
                 % key
             )
@@ -89,7 +115,7 @@ def capabilities_to_dict(capabilities):
                 key, value = capability.split(':')
                 capabilities_dict[key] = value
         except ValueError:
-            raise sync_exceptions.InvalidParameterValue(
+            raise exceptions.InvalidParameterValue(
                 _("Malformed capabilities value: %s") % capability
             )
 
