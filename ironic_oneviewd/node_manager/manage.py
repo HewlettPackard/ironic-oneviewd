@@ -82,8 +82,11 @@ class NodeManager:
                 node
             )
         except exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
-            LOG.error(ex.message)
+            LOG.warning(ex.message)
         except exceptions.ServerProfileApplicationException as ex:
+            LOG.warning(ex.message)
+            return
+        except Exception as ex:
             LOG.error(ex.message)
             return
 
@@ -92,8 +95,11 @@ class NodeManager:
                 node
             )
         except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
-            LOG.error(ex.message)
+            LOG.warning(ex.message)
         except exceptions.NoBootableConnectionFoundException as ex:
+            LOG.warning(ex.message)
+            return
+        except Exception as ex:
             LOG.error(ex.message)
             return
 
@@ -115,8 +121,10 @@ class NodeManager:
             LOG.error(traceback.format_exc())
 
     def server_hardware_has_server_profile_fully_applied(self, node):
-        node_info = self.get_node_info_from_node(node)
-        server_hardware_state = self.facade.get_server_hardware_state(node_info)
+        server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+        server_hardware_state = self.facade.get_server_hardware_state(
+            server_hardware_uuid
+        )
         return server_hardware_state == states.ONEVIEW_PROFILE_APPLIED
 
     def server_hardware_has_server_profile_applied(self, node):
