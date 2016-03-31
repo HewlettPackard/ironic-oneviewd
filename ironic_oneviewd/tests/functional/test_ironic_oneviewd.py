@@ -230,14 +230,14 @@ class TestIronicOneviewd(unittest.TestCase):
         )
 
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
                        'generate_and_assign_server_profile_from_server_profile_template')
-    def test_fail_when_hardware_already_has_server_profile_applied(
+    def test_log_warning_when_hardware_already_has_server_profile_applied(
         self, mock_apply_server_profile, mock_facade,
         mock_create_node_port, mock_get_server_hardware,
         mock_get_server_profile_assigned_to_sh, mock_log,
@@ -278,7 +278,7 @@ class TestIronicOneviewd(unittest.TestCase):
 
         mock_log.assert_called_with(msg)
 
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
@@ -286,7 +286,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
                        'generate_and_assign_server_profile_from_server_profile_template')
-    def test_log_error_when_port_configuration_throw_exception(
+    def test_log_warning_when_port_configuration_throw_exception(
         self, mock_apply_server_profile, mock_facade,
         mock_create_node_port, mock_get_server_hardware,
         mock_get_server_profile_assigned, mock_get_server_hardware_state,
@@ -334,14 +334,14 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_port')
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.error')
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
                        'generate_and_assign_server_profile_from_server_profile_template')
-    def test_log_error_when_node_already_has_port_for_mac_address(
+    def test_log_warning_when_node_already_has_port_for_mac_address(
         self, mock_apply_server_profile, mock_facade, mock_create_node_port,
         mock_get_server_hardware, mock_get_server_profile_assigned_to_sh,
         mock_log, mock_get_port_list_by_mac, mock_get_port,

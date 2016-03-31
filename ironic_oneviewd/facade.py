@@ -79,9 +79,9 @@ class Facade(object):
     def get_server_hardware(self, node_info):
         return self.oneview_client.get_server_hardware(node_info)
 
-    def get_server_hardware_state(self, node_info):
+    def get_server_hardware_state(self, uuid):
         return self.oneview_client.get_server_hardware_state(
-            node_info
+            uuid
         )
 
     def get_server_profile_assigned_to_sh(self, node_info):
