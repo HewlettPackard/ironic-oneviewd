@@ -24,6 +24,7 @@ from concurrent import futures
 from ironic_oneviewd import facade
 from ironic_oneviewd import exceptions
 from ironic_oneviewd import service_logging as logging
+from ironic_oneviewd import utils
 from ironic_oneviewd.openstack.common._i18n import _
 
 from oneview_client import states
@@ -77,15 +78,16 @@ class NodeManager:
             {'node': node.uuid}
         )
 
-        try:
-            self.apply_server_profile(
-                node
-            )
-        except exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
-            LOG.error(ex.message)
-        except exceptions.ServerProfileApplicationException as ex:
-            LOG.error(ex.message)
-            return
+        if utils.is_dynamic_allocation_enabled(node):
+            try:
+                self.apply_server_profile(
+                    node
+                )
+            except exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
+                LOG.error(ex.message)
+            except exceptions.ServerProfileApplicationException as ex:
+                LOG.error(ex.message)
+                return
 
         try:
             self.apply_node_port_configuration(
