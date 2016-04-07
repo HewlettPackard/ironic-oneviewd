@@ -121,11 +121,12 @@ def capabilities_to_dict(capabilities):
 
     return capabilities_dict
 
-def is_dynamic_allocation_enabled(node):
+def dynamic_allocation_enabled(node):
+    return_value = False
     flag = node.driver_info.get('dynamic_allocation')
-    if flag:
-        if isinstance(flag, bool):
-            return flag is True
+    if flag is not None:
+        if flag in ('true', 'True', True):
+            return_value = True
         else:
             error_msg = ("Invalid dynamic_allocation parameter value in "
                          "node's %(node_uuid)s driver_info. Valid values "
@@ -133,4 +134,4 @@ def is_dynamic_allocation_enabled(node):
                          {"node_uuid": node.uuid})
             LOG.error(error_msg)
             raise exceptions.InvalidParameterValue(_(error_msg))
-    return False
+    return return_value
