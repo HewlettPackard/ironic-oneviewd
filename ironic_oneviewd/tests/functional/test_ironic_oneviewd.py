@@ -90,6 +90,25 @@ POOL_OF_FAKE_IRONIC_NODES = [
         properties={'num_cpu': 4},
         name='fake-node-1',
         extra={}
+    ),
+    FakeIronicNode(
+        id=123,
+        uuid='66666666-7777-8888-9999-000000000000',
+        chassis_uuid='aaaaaaaa-1111-bbbb-2222-cccccccccccc',
+        maintenance=False,
+        provision_state='enroll',
+        ports=[
+            {'id': 987,
+             'uuid': '11111111-2222-3333-4444-555555555555',
+             'node_uuid': '66666666-7777-8888-9999-000000000000',
+             'address': 'AA:BB:CC:DD:EE:FF',
+             'extra': {}}
+        ],
+        driver='fake_oneview',
+        driver_info={'dynamic_allocation': True, 'user': 'foo', 'password': 'bar'},
+        properties={'num_cpu': 4},
+        name='fake-node-2',
+        extra={}
     )
 ]
 
@@ -390,6 +409,88 @@ class TestIronicOneviewd(unittest.TestCase):
         )
 
         mock_log.assert_called_with(msg)
+
+
+    @mock.patch.object(facade.Facade, 'get_port')
+    @mock.patch.object(facade.Facade, 'get_server_hardware_state')
+    @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
+    @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
+    @mock.patch.object(facade.Facade, 'set_node_provision_state')
+    @mock.patch.object(facade.Facade, 'create_node_port')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
+    @mock.patch.object(facade.Facade,
+                       'generate_and_assign_server_profile_from_server_profile_template')
+    def test_all_enroll_actions_when_dynamic_allocation_flag_is_true(
+        self, mock_apply_server_profile, mock_facade,
+        mock_create_node_port, mock_set_node_provision_state,
+        mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac,
+        mock_get_server_hardware_state, mock_get_port
+    ):
+
+
+        mocked_facade = facade.Facade(None)
+        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+
+        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
+        fake_node.provision_state = 'enroll'
+
+        info = {'dynamic_allocation': True, 'server_hardware_uri': '/rest/server-hardware/123'}
+        fake_node.driver_info = info
+        mock.patch.dict(fake_node.driver_info, info, clear=True)
+
+        properties = {'capabilities':
+                      "server_profile_template_uri:/rest/server-profile-templates/123"}
+        fake_node.properties = properties
+        mock.patch.dict(fake_node.properties, properties, clear=True)
+
+        server_profile = ServerProfile()
+        server_profile.connections = [
+            {'mac': '01:23:45:67:89:ab', 'boot': {'priority': "primary"}}
+        ]
+
+        assigned_server_profile = server_profile
+        mock_get_server_profile_assigned_to_sh.return_value = assigned_server_profile
+        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned_to_sh
+
+        server_hardware_state = 'ProfileApplied'
+        mock_get_server_hardware_state.return_value = server_hardware_state
+        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+
+        port_list_by_mac = []
+        mock_get_port_list_by_mac.return_value = port_list_by_mac
+        mocked_facade.get_port_list_by_mac = mock_get_port_list_by_mac
+
+        fake_port = copy.deepcopy(POOL_OF_FAKE_IRONIC_PORTS[0])
+        mock_get_port.return_value = fake_port
+        mocked_facade.get_port = mock_get_port
+
+        uri_server_profile_applied = '/rest/server-profiles/123'
+        mock_apply_server_profile.return_value = uri_server_profile_applied
+        mocked_facade.generate_and_assign_server_profile_from_server_profile_template = mock_apply_server_profile
+
+        port_created = True
+        mock_create_node_port.return_value = port_created
+        mocked_facade.create_node_port = mock_create_node_port
+
+        node_provision_state_changed = {'node': fake_node.uuid,
+                                        'ex_msg': 'manageable'}
+        mock_set_node_provision_state.return_value = node_provision_state_changed
+        mocked_facade.set_node_provision_state = mock_set_node_provision_state
+
+        node_manager.manage_node_provision_state(fake_node)
+
+        node_info = node_manager.get_node_info_from_node(fake_node)
+
+
+        mock_apply_server_profile.assert_not_called()
+
+        mock_create_node_port.assert_not_called()
+
+        mock_set_node_provision_state.assert_called_with(
+            fake_node,
+            'manage'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
