@@ -78,7 +78,7 @@ class NodeManager:
             {'node': node.uuid}
         )
 
-        if utils.is_dynamic_allocation_enabled(node):
+        if not utils.dynamic_allocation_enabled(node):
             try:
                 self.apply_server_profile(
                     node
