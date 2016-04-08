@@ -98,6 +98,17 @@ class NodeManager:
             except exceptions.NoBootableConnectionFoundException as ex:
                 LOG.error(ex.message)
                 return
+        else:
+            try:
+                self.apply_node_port_conf_for_dynamic_allocation(
+                    node
+                )
+            except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
+                LOG.error(ex.message)
+            except exceptions.NoBootableConnectionFoundException as ex:
+                LOG.error(ex.message)
+                return
+
 
         try:
             self.facade.set_node_provision_state(node, 'manage')
@@ -202,6 +213,26 @@ class NodeManager:
                 raise exceptions.NodeAlreadyHasPortForThisMacAddress(
                     mac
                 )
+
+    def apply_node_port_conf_for_dynamic_allocation(self, node):
+        server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+        mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
+
+        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
+
+        if not port_list_by_mac:
+            return self.facade.create_node_port(node.uuid, mac)
+        else:
+            port_obj = self.facade.get_port(port_list_by_mac[0].node_uuid)
+            if port_obj.node_uuid != node.uuid:
+                return self.facade.create_node_port(
+                    node.uuid, mac
+                )
+            else:
+                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
+                    mac
+                )
+
 
     def server_hardware_uri_from_node(self, node):
         return node.driver_info.get(
