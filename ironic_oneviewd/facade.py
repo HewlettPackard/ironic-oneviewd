@@ -17,7 +17,7 @@
 #    under the License.
 
 from ironic_oneviewd import utils
-from oneview_client import exceptions as oneview_exceptions 
+from oneview_client import exceptions as oneview_exceptions
 
 
 class Facade(object):

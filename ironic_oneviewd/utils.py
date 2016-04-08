@@ -121,6 +121,7 @@ def capabilities_to_dict(capabilities):
 
     return capabilities_dict
 
+
 def dynamic_allocation_enabled(node):
     return_value = False
     flag = node.driver_info.get('dynamic_allocation')
