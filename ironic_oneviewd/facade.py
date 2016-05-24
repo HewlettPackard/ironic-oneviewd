@@ -16,16 +16,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ironic_oneviewd.openstack_client import get_ironic_client
-from ironic_oneviewd.common import get_oneview_client
+from ironic_oneviewd import utils
 from oneview_client import exceptions as oneview_exceptions
 
 
 class Facade(object):
 
     def __init__(self, config):
-        self.ironicclient = get_ironic_client(config)
-        self.oneview_client = get_oneview_client(
+        self.ironicclient = utils.get_ironic_client(config)
+        self.oneview_client = utils.get_oneview_client(
             config.oneview.manager_url,
             config.oneview.username,
             config.oneview.password,
