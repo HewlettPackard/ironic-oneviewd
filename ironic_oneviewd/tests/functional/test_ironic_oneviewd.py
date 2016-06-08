@@ -21,8 +21,8 @@ import mock
 import unittest
 
 from ironic_oneviewd import facade
-from ironic_oneviewd.node_manager.manage import NodeManager
 from ironic_oneviewd.node_manager import manage
+from ironic_oneviewd.node_manager.manage import NodeManager
 from oneview_client.models import ServerProfile
 
 
@@ -105,7 +105,9 @@ POOL_OF_FAKE_IRONIC_NODES = [
              'extra': {}}
         ],
         driver='fake_oneview',
-        driver_info={'dynamic_allocation': True, 'user': 'foo', 'password': 'bar'},
+        driver_info={
+            'dynamic_allocation': True, 'user': 'foo', 'password': 'bar'
+        },
         properties={'num_cpu': 4},
         name='fake-node-2',
         extra={}
@@ -172,7 +174,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
+                       'generate_and_assign_sp_from_spt')
     def test_all_enroll_actions(
         self, mock_apply_server_profile, mock_facade,
         mock_create_node_port, mock_set_node_provision_state,
@@ -191,7 +193,8 @@ class TestIronicOneviewd(unittest.TestCase):
         mock.patch.dict(fake_node.driver_info, info, clear=True)
 
         properties = {'capabilities':
-                      "server_profile_template_uri:/rest/server-profile-templates/123"}
+                      "server_profile_template_uri:"
+                      "/rest/server-profile-templates/123"}
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
@@ -201,12 +204,15 @@ class TestIronicOneviewd(unittest.TestCase):
         ]
 
         assigned_server_profile = server_profile
-        mock_get_server_profile_assigned_to_sh.return_value = assigned_server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned_to_sh
+        mock_get_server_profile_assigned_to_sh.return_value = \
+            assigned_server_profile
+        mocked_facade.get_server_profile_assigned_to_sh = \
+            mock_get_server_profile_assigned_to_sh
 
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+        mocked_facade.get_server_hardware_state = \
+            mock_get_server_hardware_state
 
         port_list_by_mac = []
         mock_get_port_list_by_mac.return_value = port_list_by_mac
@@ -218,7 +224,8 @@ class TestIronicOneviewd(unittest.TestCase):
 
         uri_server_profile_applied = '/rest/server-profiles/123'
         mock_apply_server_profile.return_value = uri_server_profile_applied
-        mocked_facade.generate_and_assign_server_profile_from_server_profile_template = mock_apply_server_profile
+        mocked_facade.generate_and_assign_sp_from_spt = \
+            mock_apply_server_profile
 
         port_created = True
         mock_create_node_port.return_value = port_created
@@ -226,7 +233,8 @@ class TestIronicOneviewd(unittest.TestCase):
 
         node_provision_state_changed = {'node': fake_node.uuid,
                                         'ex_msg': 'manageable'}
-        mock_set_node_provision_state.return_value = node_provision_state_changed
+        mock_set_node_provision_state.return_value = \
+            node_provision_state_changed
         mocked_facade.set_node_provision_state = mock_set_node_provision_state
 
         node_manager.manage_node_provision_state(fake_node)
@@ -255,7 +263,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
+                       'generate_and_assign_sp_from_spt')
     def test_log_warning_when_hardware_already_has_server_profile_applied(
         self, mock_apply_server_profile, mock_facade,
         mock_create_node_port, mock_get_server_hardware,
@@ -273,7 +281,8 @@ class TestIronicOneviewd(unittest.TestCase):
         mock.patch.dict(fake_node.driver_info, info, clear=True)
 
         properties = {'capabilities':
-                      "server_profile_template_uri:/rest/server-profile-templates/123"}
+                      "server_profile_template_uri:"
+                      "/rest/server-profile-templates/123"}
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
@@ -281,19 +290,24 @@ class TestIronicOneviewd(unittest.TestCase):
         server_profile.name = 'Ironic [%s]' % fake_node.uuid
         server_profile.uri = '/rest/server-profiles/123'
         server_profile.connections = [
-            {'mac': fake_node.ports[0]['address'], 'boot': {'priority': "primary"}}
+            {'mac': fake_node.ports[0]['address'], 'boot': {
+                'priority': "primary"}}
         ]
 
         mock_get_server_profile_assigned_to_sh.return_value = server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned_to_sh
+        mocked_facade.get_server_profile_assigned_to_sh = \
+            mock_get_server_profile_assigned_to_sh
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+        mocked_facade.get_server_hardware_state = \
+            mock_get_server_hardware_state
 
         node_manager.manage_node_provision_state(fake_node)
 
-        msg = ('Node %s has a Server Profile /rest/server-profiles/123 assigned'
-               % (fake_node.uuid))
+        msg = (
+            'Node %s has a Server Profile /rest/server-profiles/123 assigned'
+            % (fake_node.uuid)
+        )
 
         mock_log.assert_called_with(msg)
 
@@ -304,7 +318,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
+                       'generate_and_assign_sp_from_spt')
     def test_log_warning_when_port_configuration_throw_exception(
         self, mock_apply_server_profile, mock_facade,
         mock_create_node_port, mock_get_server_hardware,
@@ -322,7 +336,8 @@ class TestIronicOneviewd(unittest.TestCase):
         mock.patch.dict(fake_node.driver_info, info, clear=True)
 
         properties = {'capabilities':
-                      "server_profile_template_uri:/rest/server-profile-templates/123"}
+                      "server_profile_template_uri:"
+                      "/rest/server-profile-templates/123"}
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
@@ -335,11 +350,13 @@ class TestIronicOneviewd(unittest.TestCase):
 
         assigned_server_profile = server_profile
         mock_get_server_profile_assigned.return_value = assigned_server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned
+        mocked_facade.get_server_profile_assigned_to_sh = \
+            mock_get_server_profile_assigned
 
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+        mocked_facade.get_server_hardware_state = \
+            mock_get_server_hardware_state
 
         node_manager.manage_node_provision_state(fake_node)
 
@@ -359,7 +376,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
+                       'generate_and_assign_sp_from_spt')
     def test_log_warning_when_node_already_has_port_for_mac_address(
         self, mock_apply_server_profile, mock_facade, mock_create_node_port,
         mock_get_server_hardware, mock_get_server_profile_assigned_to_sh,
@@ -377,21 +394,26 @@ class TestIronicOneviewd(unittest.TestCase):
         mock.patch.dict(fake_node.driver_info, info, clear=True)
 
         properties = {'capabilities':
-                      "server_profile_template_uri:/rest/server-profile-templates/123"}
+                      "server_profile_template_uri:"
+                      "/rest/server-profile-templates/123"}
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
         server_profile = ServerProfile()
         server_profile.connections = [
-            {'mac': fake_node.ports[0]['address'], 'boot': {'priority': "primary"}}
+            {'mac': fake_node.ports[0]['address'], 'boot': {
+                'priority': "primary"}}
         ]
 
         assigned_server_profile = server_profile
-        mock_get_server_profile_assigned_to_sh.return_value = assigned_server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned_to_sh
+        mock_get_server_profile_assigned_to_sh.return_value = \
+            assigned_server_profile
+        mocked_facade.get_server_profile_assigned_to_sh = \
+            mock_get_server_profile_assigned_to_sh
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+        mocked_facade.get_server_hardware_state = \
+            mock_get_server_hardware_state
 
         port_list_by_mac = copy.deepcopy(POOL_OF_FAKE_IRONIC_PORTS)
         mock_get_port_list_by_mac.return_value = port_list_by_mac
@@ -419,7 +441,7 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'get_server_hardware_mac')
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade,
-                       'generate_and_assign_server_profile_from_server_profile_template')
+                       'generate_and_assign_sp_from_spt')
     def test_all_enroll_actions_when_dynamic_allocation_flag_is_true(
         self, mock_apply_server_profile, mock_facade,
         mock_get_server_hardware_mac, mock_create_node_port,
@@ -435,7 +457,10 @@ class TestIronicOneviewd(unittest.TestCase):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
         fake_node.provision_state = 'enroll'
 
-        info = {'dynamic_allocation': True, 'server_hardware_uri': '/rest/server-hardware/123'}
+        info = {
+            'dynamic_allocation': True,
+            'server_hardware_uri': '/rest/server-hardware/123'
+        }
         fake_node.driver_info = info
         mock.patch.dict(fake_node.driver_info, info, clear=True)
 
@@ -452,12 +477,15 @@ class TestIronicOneviewd(unittest.TestCase):
         mocked_facade.get_server_hardware_mac = mock_get_server_hardware_mac
 
         assigned_server_profile = server_profile
-        mock_get_server_profile_assigned_to_sh.return_value = assigned_server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = mock_get_server_profile_assigned_to_sh
+        mock_get_server_profile_assigned_to_sh.return_value = \
+            assigned_server_profile
+        mocked_facade.get_server_profile_assigned_to_sh = \
+            mock_get_server_profile_assigned_to_sh
 
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = mock_get_server_hardware_state
+        mocked_facade.get_server_hardware_state = \
+            mock_get_server_hardware_state
 
         port_list_by_mac = []
         mock_get_port_list_by_mac.return_value = port_list_by_mac
@@ -469,7 +497,8 @@ class TestIronicOneviewd(unittest.TestCase):
 
         uri_server_profile_applied = '/rest/server-profiles/123'
         mock_apply_server_profile.return_value = uri_server_profile_applied
-        mocked_facade.generate_and_assign_server_profile_from_server_profile_template = mock_apply_server_profile
+        mocked_facade.generate_and_assign_sp_from_spt = \
+            mock_apply_server_profile
 
         port_created = True
         mock_create_node_port.return_value = port_created
@@ -477,7 +506,8 @@ class TestIronicOneviewd(unittest.TestCase):
 
         node_provision_state_changed = {'node': fake_node.uuid,
                                         'ex_msg': 'manageable'}
-        mock_set_node_provision_state.return_value = node_provision_state_changed
+        mock_set_node_provision_state.return_value = \
+            node_provision_state_changed
         mocked_facade.set_node_provision_state = mock_set_node_provision_state
 
         node_manager.manage_node_provision_state(fake_node)

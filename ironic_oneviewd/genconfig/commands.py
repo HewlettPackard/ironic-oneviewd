@@ -24,24 +24,28 @@ from configparser import ConfigParser
 
 
 def do_genconfig(args):
-    """Generates the config file according to user input
-    """
+    """Generates the config file according to user input"""
 
     print("========= DEFAULT ========")
-    retry_interval = input("Type the polling interval in seconds for daemon to "
-                           "manage the nodes, e.g., 300 for every 5 minutes: ")
+    retry_interval = input("Type the polling interval in seconds for "
+                           "daemon to manage the nodes "
+                           "e.g., 300 for every 5 minutes: ")
     retry_interval = retry_interval if retry_interval else "300"
     rpc_thread_pool_size = input("Type the size of the RPC thread pool: ")
-    rpc_thread_pool_size = rpc_thread_pool_size if rpc_thread_pool_size else "20"
+    rpc_thread_pool_size = \
+        rpc_thread_pool_size if rpc_thread_pool_size else "20"
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")
     openstack_username = input("Type your OpenStack username: ")
     openstack_tenant = input("Type your OpenStack user's tenant name: ")
-    openstack_password = getpass.getpass("Type your Openstack user's password: ")
+    openstack_password = getpass.getpass(
+        "Type your Openstack user's password: "
+    )
     openstack_insecure = input("Would you like to allow insecure connections "
                                "to OpenStack? [y/N]: ") or "N"
-    openstack_insecure = 'True' if openstack_insecure.lower() == 'y' else 'False'
+    openstack_insecure = 'True' if openstack_insecure.lower() == 'y' \
+        else 'False'
     default_deploy_kernel = input("Type in the default deploy keynel image "
                                   "ID on Glance: ")
     default_deploy_ramdisk = input("Type in the default deploy ramdisk "
@@ -71,7 +75,9 @@ def do_genconfig(args):
     config.set("openstack", "admin_password", openstack_password)
     config.set("openstack", "insecure", openstack_insecure)
     config.set("openstack", "default_deploy_kernel_id", default_deploy_kernel)
-    config.set("openstack", "default_deploy_ramdisk_id", default_deploy_ramdisk)
+    config.set(
+        "openstack", "default_deploy_ramdisk_id", default_deploy_ramdisk
+    )
     config.set("openstack", "default_driver", ironic_default_driver)
 
     config.add_section("oneview")

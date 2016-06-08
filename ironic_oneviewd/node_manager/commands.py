@@ -22,18 +22,17 @@ import retrying
 
 from builtins import input
 
-from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd.config import ConfClient
 from ironic_oneviewd.genconfig.commands import do_genconfig
 from ironic_oneviewd.node_manager.manage import NodeManager
+from ironic_oneviewd import service_logging as logging
 
 
 LOG = logging.getLogger(__name__)
 
 
 def do_manage_ironic_nodes(args):
-    """Show a list of OneView servers to be created as nodes in Ironic
-    """
+    """Show a list of OneView servers to be created as nodes in Ironic"""
     if args.config_file is not "":
         config_file = os.path.realpath(os.path.expanduser(args.config_file))
 
