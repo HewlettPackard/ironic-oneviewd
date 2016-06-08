@@ -21,26 +21,25 @@ import traceback
 
 from concurrent import futures
 
-from ironic_oneviewd import facade
 from ironic_oneviewd import exceptions
+from ironic_oneviewd import facade
+from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import utils
-from ironic_oneviewd.openstack.common._i18n import _
-
-from oneview_client import states
 
 LOG = logging.getLogger(__name__)
 
 
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
+ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
 
 SUPPORTED_DRIVERS = ["agent_pxe_oneview",
                      "iscsi_pxe_oneview",
                      "fake_oneview"]
 
 
-class NodeManager:
+class NodeManager(object):
 
     def __init__(self, conf_client):
 
@@ -83,10 +82,11 @@ class NodeManager:
                 self.apply_server_profile(
                     node
                 )
-            except exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
-                LOG.warning(ex.message)
+            except \
+                exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
+                LOG.warning(six.text_type(ex))
             except exceptions.ServerProfileApplicationException as ex:
-                LOG.warning(ex.message)
+                LOG.warning(six.text_type(ex))
                 return
 
             try:
@@ -94,9 +94,9 @@ class NodeManager:
                     node
                 )
             except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
-                LOG.warning(ex.message)
+                LOG.warning(six.text_type(ex))
             except exceptions.NoBootableConnectionFoundException as ex:
-                LOG.warning(ex.message)
+                LOG.warning(six.text_type(ex))
                 return
         else:
             try:
@@ -104,14 +104,14 @@ class NodeManager:
                     node
                 )
             except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
-                LOG.warning(ex.message)
+                LOG.warning(six.text_type(ex))
             except exceptions.NoBootableConnectionFoundException as ex:
-                LOG.warning(ex.message)
+                LOG.warning(six.text_type(ex))
                 return
 
         try:
             self.facade.set_node_provision_state(node, 'manage')
-        except:
+        except Exception:
             LOG.error(traceback.format_exc())
             return
 
@@ -123,7 +123,7 @@ class NodeManager:
 
         try:
             self.facade.set_node_provision_state(node, 'provide')
-        except:
+        except Exception:
             LOG.error(traceback.format_exc())
 
     def server_hardware_has_server_profile_fully_applied(self, node):
@@ -131,15 +131,16 @@ class NodeManager:
         server_hardware_state = self.facade.get_server_hardware_state(
             server_hardware_uuid
         )
-        return server_hardware_state == states.ONEVIEW_PROFILE_APPLIED
+        return server_hardware_state == ONEVIEW_PROFILE_APPLIED
 
     def server_hardware_has_server_profile_applied(self, node):
         server_hardware_uri = self.server_hardware_uri_from_node(
             node
         )
-        profile_applied = self.facade.is_server_profile_applied_on_server_hardware(
-            server_hardware_uri
-        )
+        profile_applied = \
+            self.facade.is_server_profile_applied_on_server_hardware(
+                server_hardware_uri
+            )
         return profile_applied
 
     def apply_server_profile(self, node):
@@ -153,8 +154,8 @@ class NodeManager:
 
         if server_profile_uri is None:
             try:
-                server_profile_uri = self.facade.\
-                    generate_and_assign_server_profile_from_server_profile_template(
+                server_profile_uri = \
+                    self.facade.generate_and_assign_sp_from_spt(
                         server_profile_name,
                         node_info
                     )
@@ -169,7 +170,8 @@ class NodeManager:
     def apply_node_port_configuration(self, node):
         if not self.server_hardware_has_server_profile_fully_applied(node):
             LOG.error(
-                "The Server Profile application is not finished yet for node %(node)s." %
+                "The Server Profile application is not "
+                "finished yet for node %(node)s." %
                 {'node': node.uuid}
             )
             return
@@ -270,12 +272,15 @@ class NodeManager:
         )
         driver_info = node.driver_info
         oneview_info = {
-            'server_hardware_uri': driver_info.get('server_hardware_uri'),
-            'server_hardware_type_uri': capabilities_dict.get('server_hardware_type_uri'),
-            'enclosure_group_uri': capabilities_dict.get('enclosure_group_uri'),
+            'server_hardware_uri':
+                driver_info.get('server_hardware_uri'),
+            'server_hardware_type_uri':
+                capabilities_dict.get('server_hardware_type_uri'),
+            'enclosure_group_uri':
+                capabilities_dict.get('enclosure_group_uri'),
             'server_profile_template_uri':
-            capabilities_dict.get('server_profile_template_uri') or
-            driver_info.get('server_profile_template_uri'),
+                capabilities_dict.get('server_profile_template_uri') or
+                driver_info.get('server_profile_template_uri')
         }
         return oneview_info
 
@@ -288,6 +293,7 @@ class NodeManager:
 
     def capabilities_to_dict(self, capabilities):
         """Parse the capabilities string into a dictionary
+
         :param capabilities: the node capabilities as a formatted string
         :raises: InvalidParameterValue if capabilities is not an string or has
                  a malformed value

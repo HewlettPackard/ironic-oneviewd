@@ -88,7 +88,7 @@ class Facade(object):
             node_info
         )
 
-    def generate_and_assign_server_profile_from_server_profile_template(
+    def generate_and_assign_sp_from_spt(
         self, server_profile_name, node_info):
         return self.oneview_client.apply_server_profile(
             server_profile_name, node_info
