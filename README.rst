@@ -69,7 +69,7 @@ If you prefer to create your own configuration file, it should look like this::
     insecure=<true,false>
     default_deploy_kernel_id=<your deploy kernel uuid>
     default_deploy_ramdisk_id=<your deploy ramdisk uuid>
-    default_driver=<iscsi_pxe_oneview,agent_pxe_oneview>
+    default_driver=<iscsi_pxe_oneview,agent_pxe_oneview,fake_oneview>
 
     [oneview]
     manager_url=<your OneView appliance url>
