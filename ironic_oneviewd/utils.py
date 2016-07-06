@@ -20,8 +20,8 @@ from ironicclient import client as ironic_client
 
 from oslo_utils import importutils
 
-from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import exceptions
+from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import service_logging as logging
 
 client = importutils.try_import('oneview_client.client')

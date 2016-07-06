@@ -82,8 +82,8 @@ class NodeManager(object):
                 self.apply_server_profile(
                     node
                 )
-            except \
-                exceptions.NodeAlreadyHasServerProfileAssignedException as ex:
+            except exceptions.NodeAlreadyHasServerProfileAssignedException \
+                    as ex:
                 LOG.warning(six.text_type(ex))
             except exceptions.ServerProfileApplicationException as ex:
                 LOG.warning(six.text_type(ex))
@@ -207,7 +207,7 @@ class NodeManager(object):
         if not port_list_by_mac:
             return self.facade.create_node_port(node.uuid, mac)
         else:
-            port_obj = self.facade.get_port(port_list_by_mac[0].node_uuid)
+            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
             if port_obj.node_uuid != node.uuid:
                 return self.facade.create_node_port(
                     node.uuid, mac
@@ -226,7 +226,7 @@ class NodeManager(object):
         if not port_list_by_mac:
             return self.facade.create_node_port(node.uuid, mac)
         else:
-            port_obj = self.facade.get_port(port_list_by_mac[0].node_uuid)
+            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
             if port_obj.node_uuid != node.uuid:
                 return self.facade.create_node_port(
                     node.uuid, mac

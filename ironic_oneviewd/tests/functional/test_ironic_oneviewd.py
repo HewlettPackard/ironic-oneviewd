@@ -432,6 +432,10 @@ class TestIronicOneviewd(unittest.TestCase):
 
         mock_log.assert_called_with(msg)
 
+        mock_get_port.assert_called_with(
+            fake_port.uuid
+        )
+
     @mock.patch.object(facade.Facade, 'get_port')
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')

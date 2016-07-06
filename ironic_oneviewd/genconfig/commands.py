@@ -52,7 +52,9 @@ def do_genconfig(args):
                                    "image ID on Glance: ")
 
     # TODO(thiagop): get drivers enabled with ironicclient
-    enabled_drivers = ['agent_pxe_oneview', 'iscsi_pxe_oneview']
+    enabled_drivers = [
+        'agent_pxe_oneview', 'iscsi_pxe_oneview', 'fake_oneview'
+    ]
     ironic_default_driver = input(("Which driver would you like to use? "
                                    "[%s]: ") % ','.join(enabled_drivers))
 
