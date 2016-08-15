@@ -63,7 +63,8 @@ def get_ironic_client(conf):
 
 def get_oneview_client(manager_url, username, password,
                        allow_insecure_connections=False, tls_cacert_file='',
-                       max_polling_attempts=20):
+                       max_polling_attempts=20, audit_enabled=False,
+                       audit_map_file='', audit_output_file=''):
     """Generates an instance of the OneView client.
 
     Generates an instance of the OneView client using the imported
@@ -71,14 +72,16 @@ def get_oneview_client(manager_url, username, password,
 
     :returns: an instance of the OneView client
     """
-
     oneview_client = client.Client(
         manager_url=manager_url,
         username=username,
         password=password,
         allow_insecure_connections=allow_insecure_connections,
         tls_cacert_file=tls_cacert_file,
-        max_polling_attempts=max_polling_attempts
+        max_polling_attempts=max_polling_attempts,
+        audit_enabled=audit_enabled,
+        audit_map_file=audit_map_file,
+        audit_output_file=audit_output_file
     )
     return oneview_client
 
@@ -129,10 +132,10 @@ def dynamic_allocation_enabled(node):
         if flag in ('true', 'True', True):
             return_value = True
         else:
-            error_msg = ("Invalid dynamic_allocation parameter value in "
-                         "node's %(node_uuid)s driver_info. Valid values "
-                         "are booleans true or false." %
+            error_msg = (_("Invalid dynamic_allocation parameter value in "
+                           "node's %(node_uuid)s driver_info. Valid values "
+                           "are booleans true or false.") %
                          {"node_uuid": node.uuid})
             LOG.error(error_msg)
-            raise exceptions.InvalidParameterValue(_(error_msg))
+            raise exceptions.InvalidParameterValue(error_msg)
     return return_value

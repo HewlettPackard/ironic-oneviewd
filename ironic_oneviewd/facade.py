@@ -30,6 +30,10 @@ class Facade(object):
             config.oneview.password,
             config.oneview.allow_insecure_connections,
             config.oneview.tls_cacert_file,
+            config.oneview.max_polling_attempts,
+            config.oneview.audit_enabled,
+            config.oneview.audit_map_file,
+            config.oneview.audit_output_file
         )
 
     # =========================================================================
@@ -88,8 +92,7 @@ class Facade(object):
             node_info
         )
 
-    def generate_and_assign_sp_from_spt(
-        self, server_profile_name, node_info):
+    def generate_and_assign_sp_from_spt(self, server_profile_name, node_info):
         return self.oneview_client.apply_server_profile(
             server_profile_name, node_info
         )

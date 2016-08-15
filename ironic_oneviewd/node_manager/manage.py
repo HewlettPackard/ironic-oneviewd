@@ -42,7 +42,6 @@ SUPPORTED_DRIVERS = ["agent_pxe_oneview",
 class NodeManager(object):
 
     def __init__(self, conf_client):
-
         self.facade = facade.Facade(conf_client)
         self.max_workers = int(
             conf_client.DEFAULT.rpc_thread_pool_size

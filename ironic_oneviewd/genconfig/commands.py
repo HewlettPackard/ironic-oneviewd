@@ -27,13 +27,15 @@ def do_genconfig(args):
     """Generates the config file according to user input"""
 
     print("========= DEFAULT ========")
-    retry_interval = input("Type the polling interval in seconds for "
-                           "daemon to manage the nodes "
-                           "e.g., 300 for every 5 minutes: ")
+    retry_interval = input(
+        "Type the polling interval in seconds for daemon to manage the nodes "
+        "e.g., 300 for every 5 minutes: "
+    )
     retry_interval = retry_interval if retry_interval else "300"
     rpc_thread_pool_size = input("Type the size of the RPC thread pool: ")
-    rpc_thread_pool_size = \
+    rpc_thread_pool_size = (
         rpc_thread_pool_size if rpc_thread_pool_size else "20"
+    )
 
     print("========= Openstack ========= ")
     openstack_auth_url = input("Type the auth_url for the Ironic service: ")
@@ -42,14 +44,18 @@ def do_genconfig(args):
     openstack_password = getpass.getpass(
         "Type your Openstack user's password: "
     )
-    openstack_insecure = input("Would you like to allow insecure connections "
-                               "to OpenStack? [y/N]: ") or "N"
-    openstack_insecure = 'True' if openstack_insecure.lower() == 'y' \
-        else 'False'
-    default_deploy_kernel = input("Type in the default deploy keynel image "
-                                  "ID on Glance: ")
-    default_deploy_ramdisk = input("Type in the default deploy ramdisk "
-                                   "image ID on Glance: ")
+    openstack_insecure = input(
+        "Would you like to allow insecure connections to OpenStack? [y/N]: "
+    ) or "N"
+    openstack_insecure = (
+        'True' if openstack_insecure.lower() == 'y' else 'False'
+    )
+    default_deploy_kernel = input(
+        "Type in the default deploy keynel image ID on Glance: "
+    )
+    default_deploy_ramdisk = input(
+        "Type in the default deploy ramdisk image ID on Glance: "
+    )
 
     # TODO(thiagop): get drivers enabled with ironicclient
     enabled_drivers = [
@@ -65,6 +71,12 @@ def do_genconfig(args):
     oneview_insecure = input("Would you like to allow insecure connections "
                              "to OneView? [y/N]: ") or "N"
     oneview_insecure = 'True' if oneview_insecure.lower() == 'y' else 'False'
+    oneview_audit = input(
+        "Would you like to enable OneView audit? [y/N]: "
+    ) or "N"
+    oneview_audit = 'True' if oneview_audit.lower() == 'y' else 'False'
+    oneview_audit_input = input("OneView Audit input file path: ")
+    oneview_audit_output = input("OneView Audit output file path: ")
 
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
@@ -87,6 +99,9 @@ def do_genconfig(args):
     config.set("oneview", "username", oneview_username)
     config.set("oneview", "password", oneview_password)
     config.set("oneview", "allow_insecure_connections", oneview_insecure)
+    config.set("oneview", "audit_enabled", oneview_audit)
+    config.set("oneview", "audit_map_file", oneview_audit_input)
+    config.set("oneview", "audit_output_file", oneview_audit_output)
 
     filename = input("Type the path of the new configuration file [%s]: "
                      % args.config_file) or args.config_file
