@@ -17,6 +17,7 @@
 #    under the License.
 
 import logging
+import os
 
 _formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -32,7 +33,7 @@ def _getHandler(filename, formatter):
 
 
 def getLogger(name, servicename='ironic-oneviewd'):
-    filename = servicename + '.log'
+    filename = os.path.expanduser('~/' + servicename + '.log')
     if name not in _loggers:
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)

@@ -47,9 +47,6 @@ def do_genconfig(args):
     openstack_insecure = input(
         "Would you like to allow insecure connections to OpenStack? [y/N]: "
     ) or "N"
-    openstack_insecure = (
-        'True' if openstack_insecure.lower() == 'y' else 'False'
-    )
     default_deploy_kernel = input(
         "Type in the default deploy keynel image ID on Glance: "
     )
@@ -70,13 +67,11 @@ def do_genconfig(args):
     oneview_password = getpass.getpass("Type your OneView user's password: ")
     oneview_insecure = input("Would you like to allow insecure connections "
                              "to OneView? [y/N]: ") or "N"
-    oneview_insecure = 'True' if oneview_insecure.lower() == 'y' else 'False'
     oneview_audit = input(
-        "Would you like to enable OneView audit? [y/N]: "
-    ) or "N"
-    oneview_audit = 'True' if oneview_audit.lower() == 'y' else 'False'
-    oneview_audit_input = input("OneView Audit input file path: ")
-    oneview_audit_output = input("OneView Audit output file path: ")
+        "Would you like to enable OneView audit? [y/N]: ") or "N"
+    if oneview_audit.lower() == 'y':
+        oneview_audit_input = input("OneView Audit input file path: ")
+        oneview_audit_output = input("OneView Audit output file path: ")
 
     config = ConfigParser()
     config.set("DEFAULT", "retry_interval", retry_interval)
@@ -100,8 +95,9 @@ def do_genconfig(args):
     config.set("oneview", "password", oneview_password)
     config.set("oneview", "allow_insecure_connections", oneview_insecure)
     config.set("oneview", "audit_enabled", oneview_audit)
-    config.set("oneview", "audit_map_file", oneview_audit_input)
-    config.set("oneview", "audit_output_file", oneview_audit_output)
+    if oneview_audit.lower() == 'y':
+        config.set("oneview", "audit_map_file", oneview_audit_input)
+        config.set("oneview", "audit_output_file", oneview_audit_output)
 
     filename = input("Type the path of the new configuration file [%s]: "
                      % args.config_file) or args.config_file

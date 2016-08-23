@@ -50,8 +50,11 @@ def get_ironic_client(conf):
         'os_tenant_name': conf.openstack.admin_tenant_name,
         'os_ironic_api_version': IRONIC_API_VERSION,
     }
-    if conf.openstack.insecure.lower() == 'true':
-        kwargs['insecure'] = True
+
+    kwargs['insecure'] = (
+        True if conf.openstack.insecure.lower() == 'y' else False
+    )
+
     if conf.openstack.ca_file:
         kwargs['ca_file'] = conf.openstack.ca_file
 
@@ -72,6 +75,11 @@ def get_oneview_client(manager_url, username, password,
 
     :returns: an instance of the OneView client
     """
+    audit_enabled = True if audit_enabled.lower() == 'y' else False
+    allow_insecure_connections = (
+        True if allow_insecure_connections.lower() == 'y' else False
+    )
+
     oneview_client = client.Client(
         manager_url=manager_url,
         username=username,
@@ -126,16 +134,16 @@ def capabilities_to_dict(capabilities):
 
 
 def dynamic_allocation_enabled(node):
-    return_value = False
     flag = node.driver_info.get('dynamic_allocation')
-    if flag is not None:
-        if flag in ('true', 'True', True):
-            return_value = True
+    if flag:
+        if str(flag).lower() == 'true':
+            return True
+        elif str(flag).lower() == 'false':
+            return False
         else:
-            error_msg = (_("Invalid dynamic_allocation parameter value in "
-                           "node's %(node_uuid)s driver_info. Valid values "
-                           "are booleans true or false.") %
-                         {"node_uuid": node.uuid})
-            LOG.error(error_msg)
-            raise exceptions.InvalidParameterValue(error_msg)
-    return return_value
+            msg = (("Invalid dynamic_allocation parameter value "
+                    "'%(flag)s' in node's %(node_uuid)s driver_info. "
+                    "Valid values are booleans true or false.") %
+                   {"flag": flag, "node_uuid": node.uuid})
+            raise exceptions.InvalidParameterValue(msg)
+    return False
