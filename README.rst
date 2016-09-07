@@ -15,6 +15,9 @@ This daemon monitors Ironic nodes and applies a ``Server Profile`` to such
 ``Server Hardware``. The node then goes from an *enroll* to a *manageable*
 state, and right after to an *available* state.
 
+.. note::
+   This tool works with OpenStack Identity API v2.0 and v3.
+
 For more information on OneView entities, see [1]_.
 
 Tested platforms
