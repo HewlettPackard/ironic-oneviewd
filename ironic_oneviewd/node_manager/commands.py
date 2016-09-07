@@ -38,6 +38,8 @@ def do_manage_ironic_nodes(args):
 
     defaults = {
         "ca_file": "",
+        "user_domain_id": "",
+        "project_domain_id": "",
         "insecure": False,
         "tls_cacert_file": "",
         "allow_insecure_connections": False,

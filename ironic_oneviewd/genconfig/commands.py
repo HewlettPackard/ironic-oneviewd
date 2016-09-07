@@ -46,6 +46,16 @@ def do_genconfig(args):
                                "to OpenStack? [y/N]: ") or "N"
     openstack_insecure = 'True' if openstack_insecure.lower() == 'y' \
         else 'False'
+
+    identity_version = input("Type the OpenStack Identity API version [2/3]: ")
+    identity_version = '2' if identity_version != '3' else '3'
+
+    if identity_version == 3:
+        user_domain_id = input(
+            "Type your OpenStack User Domain ID: ") or 'default'
+        project_domain_id = input(
+            "Type your OpenStack Project Domain ID: ") or 'default'
+
     default_deploy_kernel = input("Type in the default deploy keynel image "
                                   "ID on Glance: ")
     default_deploy_ramdisk = input("Type in the default deploy ramdisk "
@@ -76,6 +86,11 @@ def do_genconfig(args):
     config.set("openstack", "admin_tenant_name", openstack_tenant)
     config.set("openstack", "admin_password", openstack_password)
     config.set("openstack", "insecure", openstack_insecure)
+
+    if identity_version == 3:
+        config.set("openstack", "user_domain_id", user_domain_id)
+        config.set("openstack", "project_domain_id", project_domain_id)
+
     config.set("openstack", "default_deploy_kernel_id", default_deploy_kernel)
     config.set(
         "openstack", "default_deploy_ramdisk_id", default_deploy_ramdisk
