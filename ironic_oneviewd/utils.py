@@ -43,27 +43,30 @@ LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client(conf):
-    kwargs = {
+    daemon_kwargs = {
+        'ironic_url': 'http://10.4.0.143:6385',
         'os_username': conf.openstack.admin_user,
         'os_password': conf.openstack.admin_password,
         'os_auth_url': conf.openstack.auth_url,
+        'os_project_name': conf.openstack.admin_tenant_name,
         'os_tenant_name': conf.openstack.admin_tenant_name,
-        'os_ironic_api_version': IRONIC_API_VERSION,
+        'os_region_name': 'RegionOne',
+        'os_user_domain_id': 'default',
+        'os_project_domain_id': 'default',
+        'os_service_type': 'baremetal',
+        'os_endpoint_type': 'publicURL',
+        'insecure': True,
+        'os_cacert': '',
+        'os_ironic_api_version': IRONIC_API_VERSION
     }
-    if conf.openstack.insecure.lower() == 'true':
-        kwargs['insecure'] = True
-    if conf.openstack.ca_file:
-        kwargs['ca_file'] = conf.openstack.ca_file
 
     LOG.debug("Using OpenStack credentials specified in the configuration "
               "file to get Ironic Client")
 
-    return ironic_client.get_client(1, **kwargs)
+    return ironic_client.get_client(1, **daemon_kwargs)
 
 
-def get_oneview_client(manager_url, username, password,
-                       allow_insecure_connections=False, tls_cacert_file='',
-                       max_polling_attempts=20):
+def get_oneview_client(config):
     """Generates an instance of the OneView client.
 
     Generates an instance of the OneView client using the imported
@@ -73,12 +76,12 @@ def get_oneview_client(manager_url, username, password,
     """
 
     oneview_client = client.Client(
-        manager_url=manager_url,
-        username=username,
-        password=password,
-        allow_insecure_connections=allow_insecure_connections,
-        tls_cacert_file=tls_cacert_file,
-        max_polling_attempts=max_polling_attempts
+        manager_url=config.oneview.manager_url,
+        username=config.oneview.username,
+        password=config.oneview.password,
+        allow_insecure_connections=config.oneview.allow_insecure_connections,
+        tls_cacert_file=config.oneview.tls_cacert_file,
+        max_polling_attempts=20
     )
     return oneview_client
 

@@ -24,13 +24,7 @@ class Facade(object):
 
     def __init__(self, config):
         self.ironicclient = utils.get_ironic_client(config)
-        self.oneview_client = utils.get_oneview_client(
-            config.oneview.manager_url,
-            config.oneview.username,
-            config.oneview.password,
-            config.oneview.allow_insecure_connections,
-            config.oneview.tls_cacert_file,
-        )
+        self.oneview_client = utils.get_oneview_client(config)
 
     # =========================================================================
     # Ironic actions
