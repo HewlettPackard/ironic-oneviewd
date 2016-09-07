@@ -50,7 +50,7 @@ def do_genconfig(args):
     identity_version = input("Type the OpenStack Identity API version [2/3]: ")
     identity_version = '2' if identity_version != '3' else '3'
 
-    if identity_version == 3:
+    if identity_version == '3':
         user_domain_id = input(
             "Type your OpenStack User Domain ID: ") or 'default'
         project_domain_id = input(
@@ -87,7 +87,7 @@ def do_genconfig(args):
     config.set("openstack", "admin_password", openstack_password)
     config.set("openstack", "insecure", openstack_insecure)
 
-    if identity_version == 3:
+    if identity_version == '3':
         config.set("openstack", "user_domain_id", user_domain_id)
         config.set("openstack", "project_domain_id", project_domain_id)
 
