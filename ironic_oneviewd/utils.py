@@ -37,33 +37,33 @@ REQUIRED_ON_EXTRAS = {
     'server_hardware_uri': _("Server Hardware URI. Required."),
 }
 
-IRONIC_API_VERSION = '1.11'
+IRONIC_API_VERSION = 1
 
 LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client(conf):
     daemon_kwargs = {
-        'ironic_url': 'http://10.4.0.143:6385',
+        # 'ironic_url': None,
         'os_username': conf.openstack.admin_user,
         'os_password': conf.openstack.admin_password,
         'os_auth_url': conf.openstack.auth_url,
         'os_project_name': conf.openstack.admin_tenant_name,
         'os_tenant_name': conf.openstack.admin_tenant_name,
-        'os_region_name': 'RegionOne',
-        'os_user_domain_id': 'default',
-        'os_project_domain_id': 'default',
-        'os_service_type': 'baremetal',
-        'os_endpoint_type': 'publicURL',
+        # 'os_region_name': None,
+        # 'os_user_domain_id': None,
+        # 'os_project_domain_id': None,
+        # 'os_service_type': None,
+        # 'os_endpoint_type': None,
         'insecure': True,
-        'os_cacert': '',
-        'os_ironic_api_version': IRONIC_API_VERSION
+        'ca_file': conf.openstack.ca_file,
+        'os_ironic_api_version': '1.11'
     }
 
     LOG.debug("Using OpenStack credentials specified in the configuration "
               "file to get Ironic Client")
 
-    return ironic_client.get_client(1, **daemon_kwargs)
+    return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
 
 
 def get_oneview_client(config):
