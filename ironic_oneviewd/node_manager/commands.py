@@ -38,6 +38,7 @@ def do_manage_ironic_nodes(args):
 
     defaults = {
         "ca_file": "",
+        "max_polling_attempts": "20",
         "user_domain_id": "",
         "project_domain_id": "",
         "insecure": False,

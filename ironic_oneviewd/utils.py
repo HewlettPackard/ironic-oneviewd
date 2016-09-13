@@ -81,7 +81,7 @@ def get_oneview_client(config):
         password=config.oneview.password,
         allow_insecure_connections=config.oneview.allow_insecure_connections,
         tls_cacert_file=config.oneview.tls_cacert_file,
-        max_polling_attempts=20
+        max_polling_attempts=int(config.oneview.max_polling_attempts)
     )
     return oneview_client
 
