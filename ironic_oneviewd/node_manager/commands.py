@@ -41,6 +41,10 @@ def do_manage_ironic_nodes(args):
         "insecure": False,
         "tls_cacert_file": "",
         "allow_insecure_connections": False,
+        "max_polling_attempts": "20",
+        "audit_enabled": False,
+        "audit_map_file": "",
+        "audit_output_file": ""
     }
 
     if not os.path.isfile(config_file):
