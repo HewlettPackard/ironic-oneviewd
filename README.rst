@@ -70,6 +70,8 @@ If you prefer to create your own configuration file, it should look like this::
     admin_tenant_name=<your admin tenant name>
     auth_url=<your Ironic authentication url>
     insecure=<true,false>
+    user_domain_id = <your user domain id> (Only with Keystone v3)
+    project_domain_id = <your project domain id> (Only with Keystone v3)
     default_deploy_kernel_id=<your deploy kernel uuid>
     default_deploy_ramdisk_id=<your deploy ramdisk uuid>
     default_driver=<iscsi_pxe_oneview,agent_pxe_oneview,fake_oneview>
