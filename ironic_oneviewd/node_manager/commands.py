@@ -37,12 +37,19 @@ def do_manage_ironic_nodes(args):
         config_file = os.path.realpath(os.path.expanduser(args.config_file))
 
     defaults = {
-        "ca_file": "",
-        "max_polling_attempts": "20",
-        "user_domain_id": "",
-        "project_domain_id": "",
+        "cacert": "",
+        "cert": "",
+        "tenant_id": None,
+        "tenant_name": None,
+        "project_id": None,
+        "project_name": None,
+        "user_domain_id": None,
+        "user_domain_name": None,
+        "project_domain_id": None,
+        "project_domain_name": None,
         "insecure": False,
         "tls_cacert_file": "",
+        "max_polling_attempts": "20",
         "allow_insecure_connections": False,
     }
 

@@ -44,21 +44,23 @@ LOG = logging.getLogger(__name__)
 
 def get_ironic_client(conf):
     daemon_kwargs = {
-        'os_username': conf.openstack.admin_user,
-        'os_password': conf.openstack.admin_password,
+        'os_username': conf.openstack.username,
+        'os_password': conf.openstack.password,
         'os_auth_url': conf.openstack.auth_url,
-        'os_project_name': conf.openstack.admin_tenant_name,
-        'os_tenant_name': conf.openstack.admin_tenant_name,
-        'insecure': True,
-        'ca_file': conf.openstack.ca_file,
+        'os_region_name': conf.openstack.region_name,
+        'insecure': conf.openstack.insecure,
+        'os_cacert': conf.openstack.cacert,
+        'os_cert': conf.openstack.cert,
+        'os_project_id': conf.openstack.project_id,
+        'os_project_name': conf.openstack.project_name,
+        'os_tenant_id': conf.openstack.tenant_id,
+        'os_tenant_name': conf.openstack.tenant_name,
+        'os_user_domain_id': conf.openstack.user_domain_id,
+        'os_user_domain_name': conf.openstack.user_domain_name,
+        'os_project_domain_id': conf.openstack.project_domain_id,
+        'os_project_domain_name': conf.openstack.project_domain_name,
         'os_ironic_api_version': '1.11'
     }
-
-    if conf.openstack.user_domain_id:
-        daemon_kwargs['os_user_domain_id'] = conf.openstack.user_domain_id
-    if conf.openstack.project_domain_id:
-        daemon_kwargs[
-            'os_project_domain_id'] = conf.openstack.project_domain_id
 
     LOG.debug("Using OpenStack credentials specified in the configuration "
               "file to get Ironic Client")
