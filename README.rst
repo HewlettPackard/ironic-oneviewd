@@ -65,16 +65,24 @@ If you prefer to create your own configuration file, it should look like this::
     rpc_thread_pool_size=<thread pool size>
 
     [ironic]
-    admin_user=<your admin user name>
-    admin_password=<your admin password>
-    admin_tenant_name=<your admin tenant name>
     auth_url=<your Ironic authentication url>
+    username=<your openstack username>
+    password=<your user password>
+    region_name=<your Keystone region name>
     insecure=<true,false>
+    cacert=<your absolute path to cacert file>
+    cert=<your absolute path to cert file>
+    tenant_id=<your tenant id> (Only with Keystone v2.0)
+    tenant_name=<your tenant name> (Only with Keystone v2.0)
+    project_id=<you project id> (Only with Keystone v3)
+    project_name=<you project name> (Only with Keystone v3)
     user_domain_id = <your user domain id> (Only with Keystone v3)
+    user_domain_name = <your user domain name> (Only with Keystone v3)
     project_domain_id = <your project domain id> (Only with Keystone v3)
-    default_deploy_kernel_id=<your deploy kernel uuid>
-    default_deploy_ramdisk_id=<your deploy ramdisk uuid>
-    default_driver=<iscsi_pxe_oneview,agent_pxe_oneview,fake_oneview>
+    project_domain_name = <your project domain name> (Only with Keystone v3)
+    deploy_kernel_id=<your deploy kernel uuid>
+    deploy_ramdisk_id=<your deploy ramdisk uuid>
+    ironic_driver=<iscsi_pxe_oneview,agent_pxe_oneview,fake_oneview>
 
     [oneview]
     manager_url=<your OneView appliance url>
