@@ -90,6 +90,9 @@ If you prefer to create your own configuration file, it should look like this::
     password=<your OneView password>
     allow_insecure_connections=<true,false>
     tls_cacert_file=<path to your CA certfile, if any>
+    audit_enabled=<true,false>
+    audit_map_file=<absolute path to audit map file> (Only with audit enabled)
+    audit_output_file=<absolute path audit to output file> (Only with audit enabled)
 
 Usage
 =====
