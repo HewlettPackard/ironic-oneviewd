@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -29,7 +27,6 @@ from ironic_oneviewd import utils
 
 LOG = logging.getLogger(__name__)
 
-
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
@@ -42,7 +39,6 @@ SUPPORTED_DRIVERS = ["agent_pxe_oneview",
 class NodeManager(object):
 
     def __init__(self, conf_client):
-
         self.facade = facade.Facade(conf_client)
         self.max_workers = int(
             conf_client.DEFAULT.rpc_thread_pool_size

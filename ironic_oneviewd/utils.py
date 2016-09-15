@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -43,12 +41,14 @@ LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client(conf):
+
+    os_insecure = True if conf.openstack.insecure == 'True' else False
     daemon_kwargs = {
         'os_username': conf.openstack.username,
         'os_password': conf.openstack.password,
         'os_auth_url': conf.openstack.auth_url,
         'os_region_name': conf.openstack.region_name,
-        'insecure': conf.openstack.insecure,
+        'insecure': os_insecure,
         'os_cacert': conf.openstack.cacert,
         'os_cert': conf.openstack.cert,
         'os_project_id': conf.openstack.project_id,
@@ -76,14 +76,20 @@ def get_oneview_client(config):
 
     :returns: an instance of the OneView client
     """
+    audit_enabled = True if config.oneview.audit_enabled == 'True' else False
+    ov_insecure = (
+        True if config.oneview.allow_insecure_connections == 'True' else False)
 
     oneview_client = client.Client(
         manager_url=config.oneview.manager_url,
         username=config.oneview.username,
         password=config.oneview.password,
-        allow_insecure_connections=config.oneview.allow_insecure_connections,
+        allow_insecure_connections=ov_insecure,
         tls_cacert_file=config.oneview.tls_cacert_file,
-        max_polling_attempts=int(config.oneview.max_polling_attempts)
+        max_polling_attempts=int(config.oneview.max_polling_attempts),
+        audit_enabled=audit_enabled,
+        audit_map_file=config.oneview.audit_map_file,
+        audit_output_file=config.oneview.audit_output_file
     )
     return oneview_client
 
@@ -128,16 +134,16 @@ def capabilities_to_dict(capabilities):
 
 
 def dynamic_allocation_enabled(node):
-    return_value = False
     flag = node.driver_info.get('dynamic_allocation')
-    if flag is not None:
-        if flag in ('true', 'True', True):
-            return_value = True
+    if flag:
+        if str(flag).lower() == 'true':
+            return True
+        elif str(flag).lower() == 'false':
+            return False
         else:
-            error_msg = ("Invalid dynamic_allocation parameter value in "
-                         "node's %(node_uuid)s driver_info. Valid values "
-                         "are booleans true or false." %
-                         {"node_uuid": node.uuid})
-            LOG.error(error_msg)
-            raise exceptions.InvalidParameterValue(_(error_msg))
-    return return_value
+            msg = (("Invalid dynamic_allocation parameter value "
+                    "'%(flag)s' in node's %(node_uuid)s driver_info. "
+                    "Valid values are booleans true or false.") %
+                   {"flag": flag, "node_uuid": node.uuid})
+            raise exceptions.InvalidParameterValue(msg)
+    return False

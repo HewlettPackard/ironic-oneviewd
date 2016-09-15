@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2016 Hewlett-Packard Development Company, L.P.
 # Copyright 2016 Universidade Federal de Campina Grande
 # All Rights Reserved.

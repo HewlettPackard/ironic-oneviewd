@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -82,8 +80,7 @@ class Facade(object):
             node_info
         )
 
-    def generate_and_assign_sp_from_spt(
-        self, server_profile_name, node_info):
+    def generate_and_assign_sp_from_spt(self, server_profile_name, node_info):
         return self.oneview_client.apply_server_profile(
             server_profile_name, node_info
         )

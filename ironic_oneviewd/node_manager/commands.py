@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -27,7 +25,6 @@ from ironic_oneviewd.genconfig.commands import do_genconfig
 from ironic_oneviewd.node_manager.manage import NodeManager
 from ironic_oneviewd import service_logging as logging
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -51,6 +48,10 @@ def do_manage_ironic_nodes(args):
         "tls_cacert_file": "",
         "max_polling_attempts": "20",
         "allow_insecure_connections": False,
+        "max_polling_attempts": "20",
+        "audit_enabled": False,
+        "audit_map_file": "",
+        "audit_output_file": ""
     }
 
     if not os.path.isfile(config_file):

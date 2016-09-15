@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -22,18 +20,18 @@ Command-line interface to the OneView Sync.
 from __future__ import print_function
 
 import argparse
-import sys
 import six
+import sys
 
 from oslo_utils import encodeutils
 
 from ironic_oneviewd.genconfig import commands as genconfig_commands
 from ironic_oneviewd.node_manager import commands as oneviewd_commands
-from ironic_oneviewd.openstack.common import cliutils
 from ironic_oneviewd.openstack.common._i18n import _
+from ironic_oneviewd.openstack.common import cliutils
 
 
-VERSION = '1.0'
+VERSION = '0.3.0'
 
 COMMAND_MODULES = [
     oneviewd_commands,
@@ -109,6 +107,7 @@ class IronicOneViewD(object):
 
 def define_command(subparsers, command, callback, cmd_mapper):
     '''Define a command in the subparsers collection.
+
     :param subparsers: subparsers collection where the command will go
     :param command: command name
     :param callback: function that will be used to process the command
@@ -130,8 +129,7 @@ def define_command(subparsers, command, callback, cmd_mapper):
 
 
 def define_commands_from_module(subparsers, command_module, cmd_mapper):
-    """Add *do_* methods in a module and add as node_manager into a subparsers.
-    """
+    """Add *do_* methods in a module and node_manager into a subparsers."""
     for method_name in (a for a in dir(command_module) if a.startswith('do_')):
         # Commands should be hypen-separated instead of underscores.
         command = method_name[3:].replace('_', '-')
