@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -21,7 +19,6 @@ import configparser as ConfigParser
 import os
 
 import ironic_oneviewd.service_logging as logging
-
 
 LOG = logging.getLogger(__name__)
 

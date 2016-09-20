@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -24,17 +22,7 @@ class Facade(object):
 
     def __init__(self, config):
         self.ironicclient = utils.get_ironic_client(config)
-        self.oneview_client = utils.get_oneview_client(
-            config.oneview.manager_url,
-            config.oneview.username,
-            config.oneview.password,
-            config.oneview.allow_insecure_connections,
-            config.oneview.tls_cacert_file,
-            config.oneview.max_polling_attempts,
-            config.oneview.audit_enabled,
-            config.oneview.audit_map_file,
-            config.oneview.audit_output_file
-        )
+        self.oneview_client = utils.get_oneview_client(config)
 
     # =========================================================================
     # Ironic actions

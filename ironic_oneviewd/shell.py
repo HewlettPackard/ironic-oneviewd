@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -33,7 +31,7 @@ from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd.openstack.common import cliutils
 
 
-VERSION = '1.0'
+VERSION = '0.3.0'
 
 COMMAND_MODULES = [
     oneviewd_commands,

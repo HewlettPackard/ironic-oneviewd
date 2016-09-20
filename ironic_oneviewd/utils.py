@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -37,37 +35,40 @@ REQUIRED_ON_EXTRAS = {
     'server_hardware_uri': _("Server Hardware URI. Required."),
 }
 
-IRONIC_API_VERSION = '1.11'
+IRONIC_API_VERSION = 1
 
 LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client(conf):
-    kwargs = {
-        'os_username': conf.openstack.admin_user,
-        'os_password': conf.openstack.admin_password,
+
+    os_insecure = True if conf.openstack.insecure == 'True' else False
+    daemon_kwargs = {
+        'os_username': conf.openstack.username,
+        'os_password': conf.openstack.password,
         'os_auth_url': conf.openstack.auth_url,
-        'os_tenant_name': conf.openstack.admin_tenant_name,
-        'os_ironic_api_version': IRONIC_API_VERSION,
+        'os_region_name': conf.openstack.region_name,
+        'insecure': os_insecure,
+        'os_cacert': conf.openstack.cacert,
+        'os_cert': conf.openstack.cert,
+        'os_project_id': conf.openstack.project_id,
+        'os_project_name': conf.openstack.project_name,
+        'os_tenant_id': conf.openstack.tenant_id,
+        'os_tenant_name': conf.openstack.tenant_name,
+        'os_user_domain_id': conf.openstack.user_domain_id,
+        'os_user_domain_name': conf.openstack.user_domain_name,
+        'os_project_domain_id': conf.openstack.project_domain_id,
+        'os_project_domain_name': conf.openstack.project_domain_name,
+        'os_ironic_api_version': '1.11'
     }
-
-    kwargs['insecure'] = (
-        True if conf.openstack.insecure.lower() == 'y' else False
-    )
-
-    if conf.openstack.ca_file:
-        kwargs['ca_file'] = conf.openstack.ca_file
 
     LOG.debug("Using OpenStack credentials specified in the configuration "
               "file to get Ironic Client")
 
-    return ironic_client.get_client(1, **kwargs)
+    return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
 
 
-def get_oneview_client(manager_url, username, password,
-                       allow_insecure_connections=False, tls_cacert_file='',
-                       max_polling_attempts=20, audit_enabled=False,
-                       audit_map_file='', audit_output_file=''):
+def get_oneview_client(config):
     """Generates an instance of the OneView client.
 
     Generates an instance of the OneView client using the imported
@@ -75,21 +76,20 @@ def get_oneview_client(manager_url, username, password,
 
     :returns: an instance of the OneView client
     """
-    audit_enabled = True if audit_enabled.lower() == 'y' else False
-    allow_insecure_connections = (
-        True if allow_insecure_connections.lower() == 'y' else False
-    )
+    audit_enabled = True if config.oneview.audit_enabled == 'True' else False
+    ov_insecure = (
+        True if config.oneview.allow_insecure_connections == 'True' else False)
 
     oneview_client = client.Client(
-        manager_url=manager_url,
-        username=username,
-        password=password,
-        allow_insecure_connections=allow_insecure_connections,
-        tls_cacert_file=tls_cacert_file,
-        max_polling_attempts=max_polling_attempts,
+        manager_url=config.oneview.manager_url,
+        username=config.oneview.username,
+        password=config.oneview.password,
+        allow_insecure_connections=ov_insecure,
+        tls_cacert_file=config.oneview.tls_cacert_file,
+        max_polling_attempts=int(config.oneview.max_polling_attempts),
         audit_enabled=audit_enabled,
-        audit_map_file=audit_map_file,
-        audit_output_file=audit_output_file
+        audit_map_file=config.oneview.audit_map_file,
+        audit_output_file=config.oneview.audit_output_file
     )
     return oneview_client
 

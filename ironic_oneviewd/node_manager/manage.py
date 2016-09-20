@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-#
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Copyright 2015 Universidade Federal de Campina Grande
 # All Rights Reserved.
@@ -28,7 +26,6 @@ from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import utils
 
 LOG = logging.getLogger(__name__)
-
 
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
