@@ -116,6 +116,13 @@ Note that, in order to run this daemon, you only have to pass the
 configuration file previously created containing the required credentials
 and addresses.
 
+When ironic-oneviewd is executed, the default output is the standard output.
+Otherwise, if the --log-file parameter is passed at the execution, the logs
+will be appended to the logfile path and not shown on the standard output. You
+should pass it when starting the service::
+
+  ironic-oneviewd --log-file <path to your logging file>
+
 References
 ==========
 .. [1] HP OneView - http://www8.hp.com/us/en/business-solutions/converged-systems/oneview.html

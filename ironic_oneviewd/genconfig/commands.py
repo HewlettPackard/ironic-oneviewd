@@ -59,7 +59,7 @@ def do_genconfig(args):
         os_tenant_name = input("Type your OpenStack tenant name: ")
 
     deploy_kernel = input(
-        "Type in the default deploy keynel image ID on Glance: ")
+        "Type in the default deploy kernel image ID on Glance: ")
     deploy_ramdisk = input(
         "Type in the default deploy ramdisk image ID on Glance: ")
 

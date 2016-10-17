@@ -33,6 +33,9 @@ def do_manage_ironic_nodes(args):
     if args.config_file is not "":
         config_file = os.path.realpath(os.path.expanduser(args.config_file))
 
+    if args.log_file is not None:
+        logging.redefine_logfile_handlers(args.log_file)
+
     defaults = {
         "cacert": "",
         "cert": "",

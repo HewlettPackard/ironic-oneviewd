@@ -64,6 +64,10 @@ class IronicOneViewD(object):
         parser.add_argument('-c', '--config-file',
                             default='~/ironic-oneviewd.conf',
                             help='Default path to configuration file')
+
+        parser.add_argument('--log-file',
+                            help='The path to the logging file')
+
         return parser
 
     def get_subcommand_parser(self, version):
@@ -93,7 +97,7 @@ class IronicOneViewD(object):
         subcommand_parser = self.get_subcommand_parser(1)
         self.parser = subcommand_parser
 
-        if not argv:
+        if not argv or options.log_file or options.config_file:
             oneviewd_commands.do_manage_ironic_nodes(options)
             return 0
 
