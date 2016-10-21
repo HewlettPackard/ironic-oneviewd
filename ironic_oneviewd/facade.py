@@ -20,9 +20,9 @@ from oneview_client import exceptions as oneview_exceptions
 
 class Facade(object):
 
-    def __init__(self, config):
-        self.ironicclient = utils.get_ironic_client(config)
-        self.oneview_client = utils.get_oneview_client(config)
+    def __init__(self):
+        self.ironicclient = utils.get_ironic_client()
+        self.oneview_client = utils.get_oneview_client()
 
     # =========================================================================
     # Ironic actions

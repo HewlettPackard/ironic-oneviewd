@@ -19,9 +19,9 @@ import traceback
 
 from concurrent import futures
 
+from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
 from ironic_oneviewd import facade
-from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import utils
 
@@ -31,18 +31,12 @@ ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
 
-SUPPORTED_DRIVERS = ["agent_pxe_oneview",
-                     "iscsi_pxe_oneview",
-                     "fake_oneview"]
-
 
 class NodeManager(object):
 
-    def __init__(self, conf_client):
-        self.facade = facade.Facade(conf_client)
-        self.max_workers = int(
-            conf_client.DEFAULT.rpc_thread_pool_size
-        )
+    def __init__(self):
+        self.facade = facade.Facade()
+        self.max_workers = CONF.DEFAULT.rpc_thread_pool_size
         self.executor = futures.ThreadPoolExecutor(
             max_workers=self.max_workers
         )
@@ -56,7 +50,6 @@ class NodeManager(object):
         )
 
         nodes = [node for node in ironic_nodes
-                 if node.driver in SUPPORTED_DRIVERS
                  if node.maintenance is False]
 
         self.executor.map(self.manage_node_provision_state, nodes)
@@ -78,8 +71,9 @@ class NodeManager(object):
                 self.apply_server_profile(
                     node
                 )
-            except exceptions.NodeAlreadyHasServerProfileAssignedException \
-                    as ex:
+            except (
+                exceptions.NodeAlreadyHasServerProfileAssignedException
+            ) as ex:
                 LOG.warning(six.text_type(ex))
             except exceptions.ServerProfileApplicationException as ex:
                 LOG.warning(six.text_type(ex))
@@ -123,38 +117,40 @@ class NodeManager(object):
             LOG.error(traceback.format_exc())
 
     def server_hardware_has_server_profile_fully_applied(self, node):
-        server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+        server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
         server_hardware_state = self.facade.get_server_hardware_state(
             server_hardware_uuid
         )
         return server_hardware_state == ONEVIEW_PROFILE_APPLIED
 
     def server_hardware_has_server_profile_applied(self, node):
-        server_hardware_uri = self.server_hardware_uri_from_node(
+        server_hardware_uri = utils.server_hardware_uri_from_node(
             node
         )
-        profile_applied = \
+        profile_applied = (
             self.facade.is_server_profile_applied_on_server_hardware(
                 server_hardware_uri
             )
+        )
         return profile_applied
 
     def apply_server_profile(self, node):
-        server_profile_uri = self.server_profile_uri_from_node(
+        server_profile_uri = utils.server_profile_uri_from_node(
             node
         )
 
-        node_info = self.get_node_info_from_node(node)
+        node_info = utils.get_node_info_from_node(node)
 
         server_profile_name = "Ironic [%s]" % (node.uuid)
 
         if server_profile_uri is None:
             try:
-                server_profile_uri = \
+                server_profile_uri = (
                     self.facade.generate_and_assign_sp_from_spt(
                         server_profile_name,
                         node_info
                     )
+                )
             except Exception:
                 raise exceptions.ServerProfileApplicationException(node)
         else:
@@ -172,9 +168,9 @@ class NodeManager(object):
             )
             return
 
-        node_info = self.get_node_info_from_node(node)
+        node_info = utils.get_node_info_from_node(node)
 
-        assigned_server_profile_uri = self.server_profile_uri_from_node(
+        assigned_server_profile_uri = utils.server_profile_uri_from_node(
             node
         )
         server_profile = self.facade.get_server_profile_assigned_to_sh(
@@ -195,7 +191,7 @@ class NodeManager(object):
                 )
             mac = primary_boot_connection.get('mac')
         else:
-            server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+            server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
             mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
 
         port_list_by_mac = self.facade.get_port_list_by_mac(mac)
@@ -214,7 +210,7 @@ class NodeManager(object):
                 )
 
     def apply_node_port_conf_for_dynamic_allocation(self, node):
-        server_hardware_uuid = self.server_hardware_uuid_from_node(node)
+        server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
         mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
 
         port_list_by_mac = self.facade.get_port_list_by_mac(mac)
@@ -231,81 +227,3 @@ class NodeManager(object):
                 raise exceptions.NodeAlreadyHasPortForThisMacAddress(
                     mac
                 )
-
-    def server_hardware_uri_from_node(self, node):
-        return node.driver_info.get(
-            'server_hardware_uri'
-        )
-
-    def server_profile_template_uri_from_node(self, node):
-        node_capabilities = self.capabilities_to_dict(
-            node.properties.get('capabilities')
-        )
-        node_server_profile_template_uri = node_capabilities.get(
-            'server_profile_template_uri'
-        )
-        return node_server_profile_template_uri
-
-    def server_profile_uri_from_node(self, node):
-        node_info = self.get_node_info_from_node(node)
-        server_profile_uri = None
-        try:
-            server_profile = self.facade.get_server_profile_assigned_to_sh(
-                node_info
-            )
-
-            if node.uuid in server_profile.name:
-                return server_profile.uri
-            else:
-                return server_profile_uri
-
-        except Exception:
-            return server_profile_uri
-
-    def get_node_info_from_node(self, node):
-        capabilities_dict = self.capabilities_to_dict(
-            node.properties.get('capabilities', '')
-        )
-        driver_info = node.driver_info
-        oneview_info = {
-            'server_hardware_uri':
-                driver_info.get('server_hardware_uri'),
-            'server_hardware_type_uri':
-                capabilities_dict.get('server_hardware_type_uri'),
-            'enclosure_group_uri':
-                capabilities_dict.get('enclosure_group_uri'),
-            'server_profile_template_uri':
-                capabilities_dict.get('server_profile_template_uri') or
-                driver_info.get('server_profile_template_uri')
-        }
-        return oneview_info
-
-    def uuid_from_uri(self, uri):
-        return uri.split("/")[-1]
-
-    def server_hardware_uuid_from_node(self, node):
-        uri = self.server_hardware_uri_from_node(node)
-        return self.uuid_from_uri(uri)
-
-    def capabilities_to_dict(self, capabilities):
-        """Parse the capabilities string into a dictionary
-
-        :param capabilities: the node capabilities as a formatted string
-        :raises: InvalidParameterValue if capabilities is not an string or has
-                 a malformed value
-        """
-        capabilities_dict = {}
-        if capabilities:
-            if not isinstance(capabilities, six.string_types):
-                raise exceptions.InvalidParameterValue(
-                    _("Value of 'capabilities' must be string. Got %s")
-                    % type(capabilities))
-            try:
-                for capability in capabilities.split(','):
-                    key, value = capability.split(':')
-                    capabilities_dict[key] = value
-            except ValueError:
-                raise exceptions.InvalidParameterValue(
-                    _("Malformed capabilities value: %s") % capability
-                )
-        return capabilities_dict

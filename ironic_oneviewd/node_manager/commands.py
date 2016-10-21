@@ -15,60 +15,25 @@
 #    under the License.
 
 import os
-
 import retrying
 
-from builtins import input
-
-from ironic_oneviewd.config import ConfClient
-from ironic_oneviewd.genconfig.commands import do_genconfig
+from ironic_oneviewd.conf import CONF
+from ironic_oneviewd import config
 from ironic_oneviewd.node_manager.manage import NodeManager
 from ironic_oneviewd import service_logging as logging
 
 LOG = logging.getLogger(__name__)
 
 
-def do_manage_ironic_nodes(args):
+def do_manage_ironic_nodes(options):
     """Show a list of OneView servers to be created as nodes in Ironic"""
-    if args.config_file is not "":
-        config_file = os.path.realpath(os.path.expanduser(args.config_file))
-
-    defaults = {
-        "cacert": "",
-        "cert": "",
-        "tenant_id": None,
-        "tenant_name": None,
-        "project_id": None,
-        "project_name": None,
-        "user_domain_id": None,
-        "user_domain_name": None,
-        "project_domain_id": None,
-        "project_domain_name": None,
-        "insecure": False,
-        "tls_cacert_file": "",
-        "max_polling_attempts": "20",
-        "allow_insecure_connections": False,
-        "audit_enabled": False,
-        "audit_map_file": "",
-        "audit_output_file": ""
-    }
-
-    if not os.path.isfile(config_file):
-        while True:
-            create = input("Config file not found on `%s`. Would you like to "
-                           "create one now? [Y/n] " % config_file) or 'y'
-            if create.lower() == 'y':
-                do_genconfig(args)
-                break
-            elif create.lower() == 'n':
-                return
-            else:
-                print("Invalid option.\n")
-
-    conf = ConfClient(config_file, defaults)
+    if options.config_file is not "":
+        config_file = os.path.realpath(os.path.expanduser(options.config_file))
+    conf = config.ConfClient(options.config_file)
+    print "\n\n", dir(conf),  "\n\n"
+    print "\n\n", conf.oneview.manager_url,  "\n\n"
     node_manager = NodeManager(conf)
-
-    retry_interval_in_ms = int(conf.DEFAULT.retry_interval) * 1000
+    retry_interval_in_ms = options.DEFAULT.retry_interval * 1000
 
     @retrying.retry(wait_fixed=retry_interval_in_ms)
     def execute():
