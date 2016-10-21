@@ -34,8 +34,8 @@ class OneViewConnectionError(Exception):
 
 
 class OneViewNotAuthorizedException(Exception):
-    message = _("Unauthorized access to OneView. Check credentials in"
-                " ironic.conf.")
+    message = _("Unauthorized access to OneView. Check credentials in "
+                "ironic.conf.")
 
 
 class OneViewResourceNotFoundError(Exception):
@@ -69,7 +69,6 @@ class OneViewErrorStateSettingPowerState(Exception):
 
 
 class NodeTransitionStateBaseException(Exception):
-
     def __init__(self, node, state):
         Exception.__init__(self,
                            "Error while trasitioning the "
@@ -77,15 +76,15 @@ class NodeTransitionStateBaseException(Exception):
 
 
 class NodeTransitionToManageableStateException(
-    NodeTransitionStateBaseException):
-
+    NodeTransitionStateBaseException
+):
     def __init__(self, node):
         NodeTransitionStateBaseException.__init__(self, node, 'manageable')
 
 
 class NodeTransitionToAvailableStateException(
-    NodeTransitionStateBaseException):
-
+    NodeTransitionStateBaseException
+):
     def __init__(self, node):
         NodeTransitionStateBaseException.__init__(self, node, 'available')
 
