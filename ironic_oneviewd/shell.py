@@ -25,10 +25,10 @@ import sys
 
 from oslo_utils import encodeutils
 
+from ironic_oneviewd.conf import CONF
 from ironic_oneviewd.node_manager import commands as oneviewd_commands
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd.openstack.common import cliutils
-
 
 VERSION = '0.4.0'
 

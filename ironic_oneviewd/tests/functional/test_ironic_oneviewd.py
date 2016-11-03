@@ -21,6 +21,7 @@ import unittest
 from ironic_oneviewd import facade
 from ironic_oneviewd.node_manager import manage
 from ironic_oneviewd.node_manager.manage import NodeManager
+from ironic_oneviewd import utils
 from oneview_client.models import ServerProfile
 
 
@@ -67,7 +68,6 @@ class FakeConfHelper(object):
 class FakeConfClient(object):
     def __init__(self, max_workers):
         self.DEFAULT = FakeConfHelper(max_workers)
-
 
 POOL_OF_FAKE_IRONIC_NODES = [
     FakeIronicNode(
@@ -122,8 +122,6 @@ POOL_OF_FAKE_IRONIC_PORTS = [
     )
 ]
 
-FAKE_CONFIG_CLIENT = FakeConfClient(max_workers=20)
-
 
 class TestIronicOneviewd(unittest.TestCase):
 
@@ -134,11 +132,11 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'get_ironic_node_list')
     def test_take_node_actions(self, mock_get_ironic_node_list, mock_facade):
 
-        mocked_facade = facade.Facade(None)
+        mocked_facade = facade.Facade()
         mock_get_ironic_node_list.return_value = self.fake_ironic_nodes
         mocked_facade.get_ironic_node_list = mock_get_ironic_node_list
         mock_facade.return_value = mocked_facade
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        node_manager = NodeManager()
         node_manager.pull_ironic_nodes()
         mock_get_ironic_node_list.assert_called_with()
 
@@ -149,7 +147,7 @@ class TestIronicOneviewd(unittest.TestCase):
     ):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        node_manager = NodeManager()
         node_manager.manage_node_provision_state(fake_node)
         mock_take_enroll_state_actions.assert_called_with(fake_node)
 
@@ -160,28 +158,27 @@ class TestIronicOneviewd(unittest.TestCase):
     ):
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'manageable'
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        node_manager = NodeManager()
         node_manager.manage_node_provision_state(fake_node)
         mock_take_manageable_state_actions.assert_called_with(fake_node)
 
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_port')
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'set_node_provision_state')
     @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_sp_from_spt')
+    @mock.patch.object(facade.Facade, 'generate_and_assign_sp_from_spt')
     def test_all_enroll_actions(
-        self, mock_apply_server_profile, mock_facade,
-        mock_create_node_port, mock_set_node_provision_state,
-        mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac,
-        mock_get_server_hardware_state, mock_get_port
+        self, mock_apply_server_profile, mock_create_node_port,
+        mock_set_node_provision_state, mock_get_server_profile_assigned_to_sh,
+        mock_get_port_list_by_mac, mock_get_server_hardware_state,
+        mock_get_port, mock_facade
     ):
 
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        mocked_facade = facade.Facade()
+        node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -237,7 +234,7 @@ class TestIronicOneviewd(unittest.TestCase):
 
         node_manager.manage_node_provision_state(fake_node)
 
-        node_info = node_manager.get_node_info_from_node(fake_node)
+        node_info = utils.get_node_info_from_node(fake_node)
 
         mock_apply_server_profile.assert_called_with(
             'Ironic [%(uuid)s]' % {'uuid': fake_node.uuid},
@@ -254,22 +251,20 @@ class TestIronicOneviewd(unittest.TestCase):
             'manage'
         )
 
-    @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
+    @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
     @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_sp_from_spt')
+    @mock.patch.object(facade.Facade, 'generate_and_assign_sp_from_spt')
     def test_log_warning_when_hardware_already_has_server_profile_applied(
-        self, mock_apply_server_profile, mock_facade,
-        mock_create_node_port, mock_get_server_hardware,
-        mock_get_server_profile_assigned_to_sh, mock_log,
-        mock_get_server_hardware_state
+        self, mock_apply_server_profile, mock_create_node_port,
+        mock_get_server_hardware, mock_get_server_profile_assigned_to_sh,
+        mock_get_server_hardware_state, mock_facade, mock_log
     ):
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        mocked_facade = facade.Facade()
+        node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -310,21 +305,19 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_log.assert_called_with(msg)
 
     @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
     @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_sp_from_spt')
+    @mock.patch.object(facade.Facade, 'generate_and_assign_sp_from_spt')
     def test_log_warning_when_port_configuration_throw_exception(
-        self, mock_apply_server_profile, mock_facade,
-        mock_create_node_port, mock_get_server_hardware,
-        mock_get_server_profile_assigned, mock_get_server_hardware_state,
-        mock_log
+        self, mock_apply_server_profile, mock_create_node_port,
+        mock_get_server_hardware, mock_get_server_profile_assigned,
+        mock_get_server_hardware_state, mock_facade, mock_log
     ):
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        mocked_facade = facade.Facade()
+        node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -348,13 +341,15 @@ class TestIronicOneviewd(unittest.TestCase):
 
         assigned_server_profile = server_profile
         mock_get_server_profile_assigned.return_value = assigned_server_profile
-        mocked_facade.get_server_profile_assigned_to_sh = \
+        mocked_facade.get_server_profile_assigned_to_sh = (
             mock_get_server_profile_assigned
+        )
 
         server_hardware_state = 'ProfileApplied'
         mock_get_server_hardware_state.return_value = server_hardware_state
-        mocked_facade.get_server_hardware_state = \
+        mocked_facade.get_server_hardware_state = (
             mock_get_server_hardware_state
+        )
 
         node_manager.manage_node_provision_state(fake_node)
 
@@ -365,24 +360,23 @@ class TestIronicOneviewd(unittest.TestCase):
 
         mock_log.assert_called_with(msg)
 
+    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_port')
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
     @mock.patch.object(facade.Facade, 'get_server_profile_assigned_to_sh')
     @mock.patch.object(facade.Facade, 'get_server_hardware')
     @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_sp_from_spt')
+    @mock.patch.object(facade.Facade, 'generate_and_assign_sp_from_spt')
     def test_log_warning_when_node_already_has_port_for_mac_address(
-        self, mock_apply_server_profile, mock_facade, mock_create_node_port,
+        self, mock_apply_server_profile, mock_create_node_port,
         mock_get_server_hardware, mock_get_server_profile_assigned_to_sh,
-        mock_log, mock_get_port_list_by_mac, mock_get_port,
-        mock_get_server_hardware_state
+        mock_get_port_list_by_mac, mock_get_port,
+        mock_get_server_hardware_state, mock_facade, mock_log
     ):
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        mocked_facade = facade.Facade()
+        node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
         fake_node.provision_state = 'enroll'
@@ -434,6 +428,7 @@ class TestIronicOneviewd(unittest.TestCase):
             fake_port.uuid
         )
 
+    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_port')
     @mock.patch.object(facade.Facade, 'get_server_hardware_state')
     @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
@@ -441,20 +436,16 @@ class TestIronicOneviewd(unittest.TestCase):
     @mock.patch.object(facade.Facade, 'set_node_provision_state')
     @mock.patch.object(facade.Facade, 'create_node_port')
     @mock.patch.object(facade.Facade, 'get_server_hardware_mac')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade,
-                       'generate_and_assign_sp_from_spt')
+    @mock.patch.object(facade.Facade, 'generate_and_assign_sp_from_spt')
     def test_all_enroll_actions_when_dynamic_allocation_flag_is_true(
-        self, mock_apply_server_profile, mock_facade,
-        mock_get_server_hardware_mac, mock_create_node_port,
-        mock_set_node_provision_state,
-        mock_get_server_profile_assigned_to_sh,
-        mock_get_port_list_by_mac, mock_get_server_hardware_state,
-        mock_get_port
+        self, mock_apply_server_profile, mock_get_server_hardware_mac,
+        mock_create_node_port, mock_set_node_provision_state,
+        mock_get_server_profile_assigned_to_sh, mock_get_port_list_by_mac,
+        mock_get_server_hardware_state, mock_get_port, mock_facade
     ):
 
-        mocked_facade = facade.Facade(None)
-        node_manager = NodeManager(FAKE_CONFIG_CLIENT)
+        mocked_facade = facade.Facade()
+        node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
         fake_node.provision_state = 'enroll'

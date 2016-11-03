@@ -29,6 +29,7 @@ def do_manage_ironic_nodes(args):
         logging.redefine_logfile_handlers(args.log_file)
     if args.config_file:
         CONF(default_config_files=[args.config_file])
+
     node_manager = NodeManager()
     retry_interval_in_ms = CONF.DEFAULT.retry_interval * 1000
 
