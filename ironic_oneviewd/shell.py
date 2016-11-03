@@ -25,10 +25,10 @@ import sys
 
 from oslo_utils import encodeutils
 
+from ironic_oneviewd.conf import CONF
 from ironic_oneviewd.node_manager import commands as oneviewd_commands
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd.openstack.common import cliutils
-
 
 VERSION = '0.4.0'
 
@@ -92,9 +92,10 @@ class IronicOneViewD(object):
         (options, args) = parser.parse_known_args(argv)
         subcommand_parser = self.get_subcommand_parser(1)
         self.parser = subcommand_parser
+        CONF(default_config_files=[options.config_file])
 
         if not argv:
-            oneviewd_commands.do_manage_ironic_nodes(options)
+            oneviewd_commands.do_manage_ironic_nodes()
             return 0
 
         args = subcommand_parser.parse_args(argv)

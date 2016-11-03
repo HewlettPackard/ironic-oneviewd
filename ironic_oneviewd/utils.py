@@ -51,7 +51,6 @@ def get_ironic_client():
 
     :returns: an instance of the Ironic client
     """
-    print (CONF.oneview.items())
     daemon_kwargs = {
         'os_username': CONF.openstack.username,
         'os_password': CONF.openstack.password,
@@ -70,7 +69,6 @@ def get_ironic_client():
         'os_project_domain_name': CONF.openstack.project_domain_name,
         'os_ironic_api_version': '1.11'
     }
-    print (daemon_kwargs)
 
     LOG.debug("Using OpenStack credentials specified in the configuration "
               "file to get Ironic Client")
@@ -124,7 +122,7 @@ def verify_node_extra(node):
     return extra
 
 
-def capabilities_to_dict(self, capabilities):
+def capabilities_to_dict(capabilities):
     """Parse the capabilities string into a dictionary
 
     :param capabilities: the node capabilities as a formatted string
@@ -164,8 +162,8 @@ def dynamic_allocation_enabled(node):
     return False
 
 
-def get_node_info_from_node(self, node):
-    capabilities_dict = self.capabilities_to_dict(
+def get_node_info_from_node(node):
+    capabilities_dict = capabilities_to_dict(
         node.properties.get('capabilities', '')
     )
     driver_info = node.driver_info
@@ -183,25 +181,8 @@ def get_node_info_from_node(self, node):
     return oneview_info
 
 
-def server_profile_uri_from_node(self, node):
-    node_info = self.get_node_info_from_node(node)
-    server_profile_uri = None
-    try:
-        server_profile = self.facade.get_server_profile_assigned_to_sh(
-            node_info
-        )
-
-        if node.uuid in server_profile.name:
-            return server_profile.uri
-        else:
-            return server_profile_uri
-
-    except Exception:
-        return server_profile_uri
-
-
-def server_profile_template_uri_from_node(self, node):
-    node_capabilities = self.capabilities_to_dict(
+def server_profile_template_uri_from_node(node):
+    node_capabilities = capabilities_to_dict(
         node.properties.get('capabilities')
     )
     node_server_profile_template_uri = node_capabilities.get(
@@ -210,14 +191,14 @@ def server_profile_template_uri_from_node(self, node):
     return node_server_profile_template_uri
 
 
-def server_hardware_uri_from_node(self, node):
+def server_hardware_uri_from_node(node):
     return node.driver_info.get('server_hardware_uri')
 
 
-def server_hardware_uuid_from_node(self, node):
-    uri = self.server_hardware_uri_from_node(node)
-    return self.uuid_from_uri(uri)
+def server_hardware_uuid_from_node(node):
+    uri = server_hardware_uri_from_node(node)
+    return uuid_from_uri(uri)
 
 
-def uuid_from_uri(self, uri):
+def uuid_from_uri(uri):
     return uri.split("/")[-1]

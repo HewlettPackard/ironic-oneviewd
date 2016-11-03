@@ -14,26 +14,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import retrying
 
 from ironic_oneviewd.conf import CONF
-from ironic_oneviewd import config
 from ironic_oneviewd.node_manager.manage import NodeManager
 from ironic_oneviewd import service_logging as logging
 
 LOG = logging.getLogger(__name__)
 
 
-def do_manage_ironic_nodes(options):
+def do_manage_ironic_nodes():
     """Show a list of OneView servers to be created as nodes in Ironic"""
-    if options.config_file is not "":
-        config_file = os.path.realpath(os.path.expanduser(options.config_file))
-    conf = config.ConfClient(options.config_file)
-    print "\n\n", dir(conf),  "\n\n"
-    print "\n\n", conf.oneview.manager_url,  "\n\n"
-    node_manager = NodeManager(conf)
-    retry_interval_in_ms = options.DEFAULT.retry_interval * 1000
+    node_manager = NodeManager()
+    retry_interval_in_ms = CONF.DEFAULT.retry_interval * 1000
 
     @retrying.retry(wait_fixed=retry_interval_in_ms)
     def execute():

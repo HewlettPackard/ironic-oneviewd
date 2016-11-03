@@ -135,7 +135,7 @@ class NodeManager(object):
         return profile_applied
 
     def apply_server_profile(self, node):
-        server_profile_uri = utils.server_profile_uri_from_node(
+        server_profile_uri = self.server_profile_uri_from_node(
             node
         )
 
@@ -170,7 +170,7 @@ class NodeManager(object):
 
         node_info = utils.get_node_info_from_node(node)
 
-        assigned_server_profile_uri = utils.server_profile_uri_from_node(
+        assigned_server_profile_uri = self.server_profile_uri_from_node(
             node
         )
         server_profile = self.facade.get_server_profile_assigned_to_sh(
@@ -227,3 +227,19 @@ class NodeManager(object):
                 raise exceptions.NodeAlreadyHasPortForThisMacAddress(
                     mac
                 )
+
+    def server_profile_uri_from_node(self, node):
+        node_info = utils.get_node_info_from_node(node)
+        server_profile_uri = None
+        try:
+            server_profile = self.facade.get_server_profile_assigned_to_sh(
+                node_info
+            )
+
+            if node.uuid in server_profile.name:
+                return server_profile.uri
+            else:
+                return server_profile_uri
+
+        except Exception:
+            return server_profile_uri
