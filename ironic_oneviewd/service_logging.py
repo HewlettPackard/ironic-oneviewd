@@ -22,21 +22,36 @@ _formatter = logging.Formatter(
 _loggers = {}
 
 
-def _getHandler(filename, formatter):
-    handler = logging.FileHandler(filename)
+def _getHandler(log_file, formatter):
+
+    if log_file is not None:
+        filename = os.path.expanduser(log_file)
+        handler = logging.FileHandler(filename)
+    else:
+        handler = logging.StreamHandler()
+
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(formatter)
 
     return handler
 
 
-def getLogger(name, servicename='ironic-oneviewd'):
-    filename = os.path.expanduser('~/' + servicename + '.log')
+def getLogger(name):
     if name not in _loggers:
-        logger = logging.getLogger(name)
-        logger.setLevel(logging.DEBUG)
+        set_logger(name)
 
-        logger.addHandler(_getHandler(filename=filename,
-                                      formatter=_formatter))
-        _loggers[name] = logger
     return _loggers[name]
+
+
+def redefine_logfile_handlers(log_file):
+    for logger_name, logger in _loggers.iteritems():
+        logger.handlers = []
+        set_logger(logger_name, log_file)
+
+
+def set_logger(name, log_file=None):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(_getHandler(log_file=log_file,
+                                  formatter=_formatter))
+    _loggers[name] = logger
