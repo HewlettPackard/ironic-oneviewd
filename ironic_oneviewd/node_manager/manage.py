@@ -18,11 +18,11 @@ import six
 import traceback
 
 from concurrent import futures
+from oslo_log import log as logging
 
 from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
 from ironic_oneviewd import facade
-from ironic_oneviewd import service_logging as logging
 from ironic_oneviewd import utils
 
 LOG = logging.getLogger(__name__)

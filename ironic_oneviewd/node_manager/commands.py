@@ -16,20 +16,16 @@
 
 import retrying
 
+from oslo_log import log as logging
+
 from ironic_oneviewd.conf import CONF
 from ironic_oneviewd.node_manager.manage import NodeManager
-from ironic_oneviewd import service_logging as logging
 
 LOG = logging.getLogger(__name__)
 
 
-def do_manage_ironic_nodes(args):
+def do_manage_ironic_nodes():
     """Show a list of OneView servers to be created as nodes in Ironic."""
-    if args.log_file:
-        logging.redefine_logfile_handlers(args.log_file)
-    if args.config_file:
-        CONF(default_config_files=[args.config_file])
-
     node_manager = NodeManager()
     retry_interval_in_ms = CONF.DEFAULT.retry_interval * 1000
 
