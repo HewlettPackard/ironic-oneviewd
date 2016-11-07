@@ -106,7 +106,6 @@ class IronicOneViewD(object):
 
         if options.help:
             self.do_help(options)
-            return 0
 
         if 'help' not in argv:
             oneviewd_commands.do_manage_ironic_nodes()
