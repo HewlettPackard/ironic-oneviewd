@@ -194,39 +194,13 @@ class NodeManager(object):
             server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
             mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
 
-        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
-
-        if not port_list_by_mac:
-            return self.facade.create_node_port(node.uuid, mac)
-        else:
-            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
-            if port_obj.node_uuid != node.uuid:
-                return self.facade.create_node_port(
-                    node.uuid, mac
-                )
-            else:
-                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
-                    mac
-                )
+        return self.get_a_port_to_apply_to_node(node, mac)
 
     def apply_node_port_conf_for_dynamic_allocation(self, node):
         server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
         mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
 
-        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
-
-        if not port_list_by_mac:
-            return self.facade.create_node_port(node.uuid, mac)
-        else:
-            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
-            if port_obj.node_uuid != node.uuid:
-                return self.facade.create_node_port(
-                    node.uuid, mac
-                )
-            else:
-                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
-                    mac
-                )
+        return self.get_a_port_to_apply_to_node(node, mac)
 
     def server_profile_uri_from_node(self, node):
         node_info = utils.get_node_info_from_node(node)
@@ -243,3 +217,19 @@ class NodeManager(object):
 
         except Exception:
             return server_profile_uri
+
+    def get_a_port_to_apply_to_node(self, node, mac):
+        port_list_by_mac = self.facade.get_port_list_by_mac(mac)
+
+        if not port_list_by_mac:
+            return self.facade.create_node_port(node.uuid, mac)
+        else:
+            port_obj = self.facade.get_port(port_list_by_mac[0].uuid)
+            if port_obj.node_uuid != node.uuid:
+                return self.facade.create_node_port(
+                    node.uuid, mac
+                )
+            else:
+                raise exceptions.NodeAlreadyHasPortForThisMacAddress(
+                    mac
+                )

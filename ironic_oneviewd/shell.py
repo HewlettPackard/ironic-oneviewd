@@ -31,7 +31,6 @@ from ironic_oneviewd.node_manager import commands as oneviewd_commands
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd.openstack.common import cliutils
 
-DOMAIN = "DEFAULT"
 VERSION = '0.4.0'
 
 COMMAND_MODULES = [
@@ -95,6 +94,7 @@ class IronicOneViewD(object):
             self.parser.print_help()
 
     def main(self, argv):
+        log_domain = "DEFAULT"
         parser = self.get_base_parser()
         (options, args) = parser.parse_known_args(argv)
         subcommand_parser = self.get_subcommand_parser(1)
@@ -102,7 +102,7 @@ class IronicOneViewD(object):
 
         logging.register_options(CONF)
         CONF(default_config_files=[options.config_file])
-        logging.setup(CONF, DOMAIN)
+        logging.setup(CONF, log_domain)
 
         if options.help:
             self.do_help(options)

@@ -61,14 +61,6 @@ as::
 
     /etc/ironic-oneviewd/ironic-oneviewd.conf.sample
 
-If new parameters are necessary, it is possible to regenerate the sample
-configuration file by running the following command::
-
-    tox -egenconfig
-
-The above command will generate a sample file based on the parameters defined
-within ``ironic-oneviewd/conf``.
-
 Usage
 =====
 

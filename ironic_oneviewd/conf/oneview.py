@@ -30,25 +30,25 @@ opts = [
                 default=False,
                 help='Option to allow insecure connection with OneView.'),
     cfg.StrOpt('tls_cacert_file',
-               help='Path to CA certificate.'),
+               help='(Optional) Path to CA certificate.'),
     cfg.IntOpt('max_polling_attempts',
                default=12,
                help='Max connection retries to check changes on OneView.'),
     cfg.BoolOpt('enable_periodic_tasks',
                 default=True,
-                help='Whether to enable the periodic tasks for OneView '
-                     'driver be aware when OneView hardware resources are '
-                     'taken and released by Ironic or OneView users '
+                help='(Optional) Whether to enable the periodic tasks for '
+                     'OneView driver be aware when OneView hardware resources '
+                     'are taken and released by Ironic or OneView users '
                      'and proactively manage nodes in clean fail state '
                      'according to Dynamic Allocation model of hardware '
                      'resources allocation in OneView.'),
     cfg.IntOpt('periodic_check_interval',
                default=300,
                help='Period (in seconds) for periodic tasks to be '
-                    'executed when enable_periodic_tasks=True.'),
+                    'executed when enable_periodic_tasks is True.'),
     cfg.BoolOpt('audit_enabled',
                 default=False,
-                help='Enable auditing of OneView API requests.'),
+                help='(Optional) Enable auditing of OneView API requests.'),
     cfg.StrOpt('audit_map_file',
                help='Path to map file for OneView audit cases. '
                     'Used only when OneView API audit is enabled. '

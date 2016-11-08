@@ -31,25 +31,27 @@
 # value)
 #allow_insecure_connections = false
 
-# Path to CA certificate. (string value)
+# (Optional) Path to CA certificate. (string value)
 #tls_cacert_file = <None>
 
 # Max connection retries to check changes on OneView. (integer
 # value)
 #max_polling_attempts = 12
 
-# Whether to enable the periodic tasks for OneView driver be
-# aware when OneView hardware resources are taken and released
-# by Ironic or OneView users and proactively manage nodes in
-# clean fail state according to Dynamic Allocation model of
-# hardware resources allocation in OneView. (boolean value)
+# (Optional) Whether to enable the periodic tasks for OneView
+# driver be aware when OneView hardware resources are taken
+# and released by Ironic or OneView users and proactively
+# manage nodes in clean fail state according to Dynamic
+# Allocation model of hardware resources allocation in
+# OneView. (boolean value)
 #enable_periodic_tasks = true
 
 # Period (in seconds) for periodic tasks to be executed when
-# enable_periodic_tasks=True. (integer value)
+# enable_periodic_tasks is True. (integer value)
 #periodic_check_interval = 300
 
-# Enable auditing of OneView API requests. (boolean value)
+# (Optional) Enable auditing of OneView API requests. (boolean
+# value)
 #audit_enabled = false
 
 # Path to map file for OneView audit cases. Used only when
@@ -84,10 +86,11 @@
 # Allow insecure SSL (no cert verification). (boolean value)
 #insecure = false
 
-# Path to OpenStack CA certificate bundle file. (string value)
+# (Optional) Path to CA certificate bundle file. (string
+# value)
 #cacert = <None>
 
-# Path to cert file. (string value)
+# (Optional) Path to cert file. (string value)
 #cert = <None>
 
 # Ironic deploy kernel image uuid. (string value)
@@ -101,11 +104,11 @@
 #ironic_driver = <None>
 
 # ID of the OpenStack tenant. (deprecated in favour of
-# os_project_id) (string value)
+# project_id) (string value)
 #tenant_id = <None>
 
 # Name of the OpenStack tenant. (deprecated in favour of
-# os_project_name) (string value)
+# project_name) (string value)
 #tenant_name = <None>
 
 # ID of the OpenStack project. (string value)

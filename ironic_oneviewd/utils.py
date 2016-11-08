@@ -46,8 +46,8 @@ LOG = logging.getLogger(__name__)
 def get_ironic_client():
     """Generates an instance of the Ironic client.
 
-    Generates an instance of the Ironic client using the imported
-    ironicclient library.
+    This method creates an instance of the Ironic client using the OpenStack
+    credentials from config file and the imported ironicclient library.
 
     :returns: an instance of the Ironic client
     """
