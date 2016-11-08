@@ -31,6 +31,12 @@ ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
 ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
 
+SUPPORTED_DRIVERS = [
+    'agent_pxe_oneview',
+    'iscsi_pxe_oneview',
+    'fake_oneview'
+]
+
 
 class NodeManager(object):
 
@@ -50,6 +56,7 @@ class NodeManager(object):
         )
 
         nodes = [node for node in ironic_nodes
+                 if node.driver in SUPPORTED_DRIVERS
                  if node.maintenance is False]
 
         self.executor.map(self.manage_node_provision_state, nodes)
