@@ -14,7 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 """
-Command-line interface to the OneView Sync.
+Daemon to the Ironic OneView drivers.
 """
 
 from __future__ import print_function
@@ -23,19 +23,18 @@ import argparse
 import six
 import sys
 
+from oslo_log import log as logging
 from oslo_utils import encodeutils
 
-from ironic_oneviewd.genconfig import commands as genconfig_commands
+from ironic_oneviewd.conf import CONF
 from ironic_oneviewd.node_manager import commands as oneviewd_commands
 from ironic_oneviewd.openstack.common._i18n import _
 from ironic_oneviewd.openstack.common import cliutils
 
-
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 
 COMMAND_MODULES = [
     oneviewd_commands,
-    genconfig_commands
 ]
 
 
@@ -62,11 +61,14 @@ class IronicOneViewD(object):
                             version=VERSION)
 
         parser.add_argument('-c', '--config-file',
-                            default='~/ironic-oneviewd.conf',
-                            help='Default path to configuration file')
+                            default='/etc/ironic-oneviewd/'
+                                    'ironic-oneviewd.conf',
+                            help='Path to the Ironic OneView daemon '
+                                 'configuration file.')
 
-        parser.add_argument('--log-file',
-                            help='The path to the logging file')
+        parser.add_argument('-l', '--log-file',
+                            help='Path to the Ironic OneView daemon '
+                                 'logging file.')
 
         return parser
 
@@ -92,21 +94,28 @@ class IronicOneViewD(object):
             self.parser.print_help()
 
     def main(self, argv):
+        log_domain = "DEFAULT"
         parser = self.get_base_parser()
         (options, args) = parser.parse_known_args(argv)
         subcommand_parser = self.get_subcommand_parser(1)
         self.parser = subcommand_parser
 
-        if not argv or options.log_file or options.config_file:
-            oneviewd_commands.do_manage_ironic_nodes(options)
-            return 0
+        logging.register_options(CONF)
+        CONF(default_config_files=[options.config_file])
+        logging.setup(CONF, log_domain)
+
+        if options.help:
+            self.do_help(options)
+
+        if 'help' not in argv:
+            oneviewd_commands.do_manage_ironic_nodes()
 
         args = subcommand_parser.parse_args(argv)
+
         # Short-circuit and deal with these node_manager right away.
         if args.func == self.do_help:
             self.do_help(args)
             return 0
-        args.func(args)
 
 
 def define_command(subparsers, command, callback, cmd_mapper):

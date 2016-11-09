@@ -14,13 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import six
+
 from ironicclient import client as ironic_client
 
+from oslo_log import log as logging
 from oslo_utils import importutils
 
+from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
 from ironic_oneviewd.openstack.common._i18n import _
-from ironic_oneviewd import service_logging as logging
 
 client = importutils.try_import('oneview_client.client')
 oneview_states = importutils.try_import('oneview_client.states')
@@ -40,25 +43,30 @@ IRONIC_API_VERSION = 1
 LOG = logging.getLogger(__name__)
 
 
-def get_ironic_client(conf):
+def get_ironic_client():
+    """Generates an instance of the Ironic client.
 
-    os_insecure = True if conf.openstack.insecure == 'True' else False
+    This method creates an instance of the Ironic client using the OpenStack
+    credentials from config file and the imported ironicclient library.
+
+    :returns: an instance of the Ironic client
+    """
     daemon_kwargs = {
-        'os_username': conf.openstack.username,
-        'os_password': conf.openstack.password,
-        'os_auth_url': conf.openstack.auth_url,
-        'os_region_name': conf.openstack.region_name,
-        'insecure': os_insecure,
-        'os_cacert': conf.openstack.cacert,
-        'os_cert': conf.openstack.cert,
-        'os_project_id': conf.openstack.project_id,
-        'os_project_name': conf.openstack.project_name,
-        'os_tenant_id': conf.openstack.tenant_id,
-        'os_tenant_name': conf.openstack.tenant_name,
-        'os_user_domain_id': conf.openstack.user_domain_id,
-        'os_user_domain_name': conf.openstack.user_domain_name,
-        'os_project_domain_id': conf.openstack.project_domain_id,
-        'os_project_domain_name': conf.openstack.project_domain_name,
+        'os_username': CONF.openstack.username,
+        'os_password': CONF.openstack.password,
+        'os_auth_url': CONF.openstack.auth_url,
+        'os_region_name': CONF.openstack.region_name,
+        'insecure': CONF.openstack.insecure,
+        'os_cacert': CONF.openstack.cacert,
+        'os_cert': CONF.openstack.cert,
+        'os_project_id': CONF.openstack.project_id,
+        'os_project_name': CONF.openstack.project_name,
+        'os_tenant_id': CONF.openstack.tenant_id,
+        'os_tenant_name': CONF.openstack.tenant_name,
+        'os_user_domain_id': CONF.openstack.user_domain_id,
+        'os_user_domain_name': CONF.openstack.user_domain_name,
+        'os_project_domain_id': CONF.openstack.project_domain_id,
+        'os_project_domain_name': CONF.openstack.project_domain_name,
         'os_ironic_api_version': '1.11'
     }
 
@@ -68,7 +76,7 @@ def get_ironic_client(conf):
     return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
 
 
-def get_oneview_client(config):
+def get_oneview_client():
     """Generates an instance of the OneView client.
 
     Generates an instance of the OneView client using the imported
@@ -76,20 +84,16 @@ def get_oneview_client(config):
 
     :returns: an instance of the OneView client
     """
-    audit_enabled = True if config.oneview.audit_enabled == 'True' else False
-    ov_insecure = (
-        True if config.oneview.allow_insecure_connections == 'True' else False)
-
     oneview_client = client.Client(
-        manager_url=config.oneview.manager_url,
-        username=config.oneview.username,
-        password=config.oneview.password,
-        allow_insecure_connections=ov_insecure,
-        tls_cacert_file=config.oneview.tls_cacert_file,
-        max_polling_attempts=int(config.oneview.max_polling_attempts),
-        audit_enabled=audit_enabled,
-        audit_map_file=config.oneview.audit_map_file,
-        audit_output_file=config.oneview.audit_output_file
+        manager_url=CONF.oneview.manager_url,
+        username=CONF.oneview.username,
+        password=CONF.oneview.password,
+        allow_insecure_connections=CONF.oneview.allow_insecure_connections,
+        tls_cacert_file=CONF.oneview.tls_cacert_file,
+        max_polling_attempts=CONF.oneview.max_polling_attempts,
+        audit_enabled=CONF.oneview.audit_enabled,
+        audit_map_file=CONF.oneview.audit_map_file,
+        audit_output_file=CONF.oneview.audit_output_file
     )
     return oneview_client
 
@@ -119,8 +123,18 @@ def verify_node_extra(node):
 
 
 def capabilities_to_dict(capabilities):
+    """Parse the capabilities string into a dictionary
+
+    :param capabilities: the node capabilities as a formatted string
+    :raises: InvalidParameterValue if capabilities is not an string or has
+             a malformed value
+    """
     capabilities_dict = {}
     if capabilities:
+        if not isinstance(capabilities, six.string_types):
+            raise exceptions.InvalidParameterValue(
+                _("Value of 'capabilities' must be string. Got %s")
+                % type(capabilities))
         try:
             for capability in capabilities.split(','):
                 key, value = capability.split(':')
@@ -129,7 +143,6 @@ def capabilities_to_dict(capabilities):
             raise exceptions.InvalidParameterValue(
                 _("Malformed capabilities value: %s") % capability
             )
-
     return capabilities_dict
 
 
@@ -147,3 +160,45 @@ def dynamic_allocation_enabled(node):
                    {"flag": flag, "node_uuid": node.uuid})
             raise exceptions.InvalidParameterValue(msg)
     return False
+
+
+def get_node_info_from_node(node):
+    capabilities_dict = capabilities_to_dict(
+        node.properties.get('capabilities', '')
+    )
+    driver_info = node.driver_info
+    oneview_info = {
+        'server_hardware_uri':
+            driver_info.get('server_hardware_uri'),
+        'server_hardware_type_uri':
+            capabilities_dict.get('server_hardware_type_uri'),
+        'enclosure_group_uri':
+            capabilities_dict.get('enclosure_group_uri'),
+        'server_profile_template_uri':
+            capabilities_dict.get('server_profile_template_uri') or
+            driver_info.get('server_profile_template_uri')
+    }
+    return oneview_info
+
+
+def server_profile_template_uri_from_node(node):
+    node_capabilities = capabilities_to_dict(
+        node.properties.get('capabilities')
+    )
+    node_server_profile_template_uri = node_capabilities.get(
+        'server_profile_template_uri'
+    )
+    return node_server_profile_template_uri
+
+
+def server_hardware_uri_from_node(node):
+    return node.driver_info.get('server_hardware_uri')
+
+
+def server_hardware_uuid_from_node(node):
+    uri = server_hardware_uri_from_node(node)
+    return uuid_from_uri(uri)
+
+
+def uuid_from_uri(uri):
+    return uri.split("/")[-1]
