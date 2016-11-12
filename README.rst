@@ -64,7 +64,7 @@ as::
 Usage
 =====
 
-If your *~/ironic-oneviewd.conf* configuration file is in your home directory,
+If your configuration file is in the default directory */etc/ironic-oneviewd/ironic-oneviewd.conf*,
 the service will automatically use this conf. In this case, to run
 ironic-oneviewd, do::
 
