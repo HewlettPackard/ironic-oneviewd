@@ -29,7 +29,9 @@ LOG = logging.getLogger(__name__)
 
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
+INSPECTION_FAILED_PROVISION_STATE = 'inspect failed'
 ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
+IN_USE_BY_ONEVIEW = 'is already in use by OneView.'
 
 SUPPORTED_DRIVERS = [
     'agent_pxe_oneview',
@@ -39,7 +41,6 @@ SUPPORTED_DRIVERS = [
 
 
 class NodeManager(object):
-
     def __init__(self):
         self.facade = facade.Facade()
         self.max_workers = CONF.DEFAULT.rpc_thread_pool_size
@@ -66,6 +67,8 @@ class NodeManager(object):
             self.take_enroll_state_actions(node)
         elif node.provision_state == MANAGEABLE_PROVISION_STATE:
             self.take_manageable_state_actions(node)
+        elif node.provision_state == INSPECTION_FAILED_PROVISION_STATE:
+            self.take_inspect_failed_state_actions(node)
 
     def take_enroll_state_actions(self, node):
         LOG.info(
@@ -73,23 +76,9 @@ class NodeManager(object):
             {'node': node.uuid}
         )
 
-        if not utils.dynamic_allocation_enabled(node):
+        if utils.dynamic_allocation_enabled(node):
             try:
-                self.apply_server_profile(
-                    node
-                )
-            except (
-                exceptions.NodeAlreadyHasServerProfileAssignedException
-            ) as ex:
-                LOG.warning(six.text_type(ex))
-            except exceptions.ServerProfileApplicationException as ex:
-                LOG.warning(six.text_type(ex))
-                return
-
-            try:
-                self.apply_node_port_configuration(
-                    node
-                )
+                self.apply_node_port_conf_for_dynamic_allocation(node)
             except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
                 LOG.warning(six.text_type(ex))
             except exceptions.NoBootableConnectionFoundException as ex:
@@ -97,9 +86,17 @@ class NodeManager(object):
                 return
         else:
             try:
-                self.apply_node_port_conf_for_dynamic_allocation(
-                    node
-                )
+                self.apply_server_profile(node)
+            except (
+                    exceptions.NodeAlreadyHasServerProfileAssignedException
+            ) as ex:
+                LOG.warning(six.text_type(ex))
+            except exceptions.ServerProfileApplicationException as ex:
+                LOG.warning(six.text_type(ex))
+                return
+
+            try:
+                self.apply_node_port_configuration(node)
             except exceptions.NodeAlreadyHasPortForThisMacAddress as ex:
                 LOG.warning(six.text_type(ex))
             except exceptions.NoBootableConnectionFoundException as ex:
@@ -118,10 +115,29 @@ class NodeManager(object):
             {'node': node.uuid}
         )
 
+        if utils.dynamic_allocation_enabled(node):
+            if (CONF.openstack.inspection_enabled and
+                    not utils.node_has_hardware_propeties(node)):
+                self.facade.set_node_provision_state(node, 'inspect')
+                return
+            elif (not CONF.openstack.inspection_enabled and
+                    not utils.node_has_hardware_propeties(node)):
+                LOG.warning("Node does not have Hardware Properties and "
+                            "Inspection is not enabled.")
         try:
             self.facade.set_node_provision_state(node, 'provide')
         except Exception:
             LOG.error(traceback.format_exc())
+
+    def take_inspect_failed_state_actions(self, node):
+        if (utils.dynamic_allocation_enabled(node) and
+                node.last_error and IN_USE_BY_ONEVIEW in node.last_error):
+            LOG.info(
+                "Taking inspect failed state actions for node %(node)s." %
+                {'node': node.uuid}
+            )
+
+            self.facade.set_node_provision_state(node, 'manage')
 
     def server_hardware_has_server_profile_fully_applied(self, node):
         server_hardware_uuid = utils.server_hardware_uuid_from_node(node)

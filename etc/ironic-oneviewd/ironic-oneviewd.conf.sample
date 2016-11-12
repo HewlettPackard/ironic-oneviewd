@@ -128,3 +128,7 @@
 
 # ID of a domain the project belongs to. (string value)
 #project_domain_name = <None>
+
+# Allow inspection when Hardware Property is not present.
+# (boolean value)
+#inspection_enabled = false

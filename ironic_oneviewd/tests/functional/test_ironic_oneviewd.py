@@ -124,16 +124,12 @@ POOL_OF_FAKE_IRONIC_PORTS = [
 
 
 class TestIronicOneviewd(unittest.TestCase):
-
-    def setUp(self):
-        self.fake_ironic_nodes = POOL_OF_FAKE_IRONIC_NODES
-
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_ironic_node_list')
     def test_take_node_actions(self, mock_get_ironic_node_list, mock_facade):
 
         mocked_facade = facade.Facade()
-        mock_get_ironic_node_list.return_value = self.fake_ironic_nodes
+        mock_get_ironic_node_list.return_value = POOL_OF_FAKE_IRONIC_NODES
         mocked_facade.get_ironic_node_list = mock_get_ironic_node_list
         mock_facade.return_value = mocked_facade
         node_manager = NodeManager()
@@ -161,6 +157,37 @@ class TestIronicOneviewd(unittest.TestCase):
         node_manager = NodeManager()
         node_manager.manage_node_provision_state(fake_node)
         mock_take_manageable_state_actions.assert_called_with(fake_node)
+
+    @mock.patch('ironic_oneviewd.conf.CONF.openstack.inspection_enabled',
+                new_callable=mock.PropertyMock)
+    @mock.patch('ironic_oneviewd.facade.Facade', new_callable=mock.MagicMock)
+    def test_manage_provision_state_when_dynamic_allocation_inspection_enabled(
+        self, mock_facade, mock_inspection_enabled
+    ):
+        mock_facade = facade.Facade()
+        mock_facade.set_node_provision_state = mock.MagicMock()
+        mock_inspection_enabled.return_value = True
+        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
+        fake_node.provision_state = 'manageable'
+        node_manager = NodeManager()
+        node_manager.manage_node_provision_state(fake_node)
+        mock_facade.set_node_provision_state.assert_called_with(fake_node,
+                                                                'inspect')
+
+    @mock.patch('ironic_oneviewd.facade.Facade', new_callable=mock.MagicMock)
+    def test_manage_node_provision_state_with_node_in_inspect_failed(
+        self, mock_facade
+    ):
+        mock_facade = facade.Facade()
+        mock_facade.set_node_provision_state = mock.MagicMock()
+        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
+        fake_node.provision_state = 'inspect failed'
+        fake_node.last_error = ("OneView exception occurred. Error: Node %s is"
+                                " already in use by OneView.") % fake_node.id
+        node_manager = NodeManager()
+        node_manager.manage_node_provision_state(fake_node)
+        mock_facade.set_node_provision_state.assert_called_with(fake_node,
+                                                                'manage')
 
     @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
     @mock.patch.object(facade.Facade, 'get_port')
