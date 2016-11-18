@@ -62,7 +62,8 @@ opts = [
                help='ID of a domain the project belongs to.'),
     cfg.BoolOpt('inspection_enabled',
                 default=False,
-                help='Allow inspection when Hardware Property is not present.')
+                help='Run inspection on nodes when any hardware property is '
+                     'missing.')
 ]
 
 

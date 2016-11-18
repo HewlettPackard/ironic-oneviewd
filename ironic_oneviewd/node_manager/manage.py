@@ -122,8 +122,10 @@ class NodeManager(object):
                 return
             elif (not CONF.openstack.inspection_enabled and
                     not utils.node_has_hardware_propeties(node)):
-                LOG.warning("Node does not have Hardware Properties and "
-                            "Inspection is not enabled.")
+                LOG.warning(
+                    "Node %(node)s has missing hardware properties and "
+                    "Inspection is not enabled." % {'node': node.uuid}
+                )
         try:
             self.facade.set_node_provision_state(node, 'provide')
         except Exception:
@@ -131,9 +133,10 @@ class NodeManager(object):
 
     def take_inspect_failed_state_actions(self, node):
         if (utils.dynamic_allocation_enabled(node) and
-                node.last_error and IN_USE_BY_ONEVIEW in node.last_error):
+                node.last_error and (IN_USE_BY_ONEVIEW in node.last_error)):
             LOG.info(
-                "Taking inspect failed state actions for node %(node)s." %
+                "Inspection failed on node %(node)s due to machine being in "
+                "use by OneView. Moving it back to manageable state." %
                 {'node': node.uuid}
             )
 
