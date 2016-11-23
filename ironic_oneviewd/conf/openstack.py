@@ -59,7 +59,11 @@ opts = [
     cfg.StrOpt('project_domain_id',
                help='ID of a domain the project belongs to.'),
     cfg.StrOpt('project_domain_name',
-               help='ID of a domain the project belongs to.')
+               help='ID of a domain the project belongs to.'),
+    cfg.BoolOpt('inspection_enabled',
+                default=False,
+                help='Run inspection on nodes when any hardware property is '
+                     'missing.')
 ]
 
 

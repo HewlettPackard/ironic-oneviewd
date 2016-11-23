@@ -181,6 +181,14 @@ def get_node_info_from_node(node):
     return oneview_info
 
 
+def node_has_hardware_propeties(node):
+    properties = [node.properties.get("memory_mb"),
+                  node.properties.get("cpu_arch"),
+                  node.properties.get("local_gb"),
+                  node.properties.get("cpus")]
+    return all(properties)
+
+
 def server_profile_template_uri_from_node(node):
     node_capabilities = capabilities_to_dict(
         node.properties.get('capabilities')
