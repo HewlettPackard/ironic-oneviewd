@@ -142,6 +142,11 @@ class NodeManager(object):
 
             self.facade.set_node_provision_state(node, 'manage')
 
+        else:
+            LOG.warning(
+                "Inspection failed on node %(node)s." % {'node': node.uuid}
+            )
+
     def server_hardware_has_server_profile_fully_applied(self, node):
         server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
         server_hardware_state = self.facade.get_server_hardware_state(

@@ -129,6 +129,6 @@
 # ID of a domain the project belongs to. (string value)
 #project_domain_name = <None>
 
-# Allow inspection when Hardware Property is not present.
-# (boolean value)
+# Run inspection on nodes when any hardware property is
+# missing. (boolean value)
 #inspection_enabled = false
