@@ -59,6 +59,7 @@ def get_ironic_client():
         'insecure': CONF.openstack.insecure,
         'os_cacert': CONF.openstack.cacert,
         'os_cert': CONF.openstack.cert,
+        'os_endpoint_type': CONF.openstack.endpoint_type,
         'os_project_id': CONF.openstack.project_id,
         'os_project_name': CONF.openstack.project_name,
         'os_tenant_id': CONF.openstack.tenant_id,

@@ -99,6 +99,9 @@
 # Ironic deploy remdisk image uuid. (string value)
 #deploy_ramdisk_id = <None>
 
+# (Optional) OpenStack endpoint type. (string value)
+#endpoint_type = publicURL
+
 # Ironic OneView driver for node create.  (string value)
 # Allowed values: iscsi_pxe_oneview, agent_pxe_oneview, fake_oneview
 #ironic_driver = <None>
