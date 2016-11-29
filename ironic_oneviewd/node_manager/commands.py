@@ -34,6 +34,6 @@ def do_manage_ironic_nodes():
         try:
             node_manager.pull_ironic_nodes()
         except Exception as ex:
-            LOG.error(ex.message)
+            LOG.error(ex)
         raise Exception("Continue trying...")
     execute()
