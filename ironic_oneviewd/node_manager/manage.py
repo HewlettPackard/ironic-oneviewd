@@ -39,6 +39,10 @@ SUPPORTED_DRIVERS = [
     'fake_oneview'
 ]
 
+ACTION_STATES = [ENROLL_PROVISION_STATE,
+                 MANAGEABLE_PROVISION_STATE,
+                 INSPECTION_FAILED_PROVISION_STATE]
+
 
 class NodeManager(object):
     def __init__(self):
@@ -53,7 +57,7 @@ class NodeManager(object):
 
         nodes = [node for node in ironic_nodes
                  if node.driver in SUPPORTED_DRIVERS
-                 if node.provision_state != AVAILABLE_PROVISION_STATE
+                 if node.provision_state in ACTION_STATES
                  if node.maintenance is False]
 
         if nodes:
@@ -61,8 +65,7 @@ class NodeManager(object):
                 "%(nodes)s Ironic nodes has been taken." %
                 {"nodes": len(nodes)}
             )
-
-        self.executor.map(self.manage_node_provision_state, nodes)
+            self.executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
         if node.provision_state == ENROLL_PROVISION_STATE:
