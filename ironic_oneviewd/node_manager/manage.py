@@ -15,7 +15,6 @@
 #    under the License.
 
 import six
-import traceback
 
 from concurrent import futures
 from oslo_log import log as logging
@@ -29,6 +28,7 @@ LOG = logging.getLogger(__name__)
 
 ENROLL_PROVISION_STATE = 'enroll'
 MANAGEABLE_PROVISION_STATE = 'manageable'
+AVAILABLE_PROVISION_STATE = 'available'
 INSPECTION_FAILED_PROVISION_STATE = 'inspect failed'
 ONEVIEW_PROFILE_APPLIED = 'ProfileApplied'
 IN_USE_BY_ONEVIEW = 'is already in use by OneView.'
@@ -38,6 +38,10 @@ SUPPORTED_DRIVERS = [
     'iscsi_pxe_oneview',
     'fake_oneview'
 ]
+
+ACTION_STATES = [ENROLL_PROVISION_STATE,
+                 MANAGEABLE_PROVISION_STATE,
+                 INSPECTION_FAILED_PROVISION_STATE]
 
 
 class NodeManager(object):
@@ -51,16 +55,17 @@ class NodeManager(object):
     def pull_ironic_nodes(self):
         ironic_nodes = self.facade.get_ironic_node_list()
 
-        LOG.info(
-            "%(nodes)s Ironic nodes has been taken." %
-            {"nodes": len(ironic_nodes)}
-        )
-
         nodes = [node for node in ironic_nodes
                  if node.driver in SUPPORTED_DRIVERS
+                 if node.provision_state in ACTION_STATES
                  if node.maintenance is False]
 
-        self.executor.map(self.manage_node_provision_state, nodes)
+        if nodes:
+            LOG.info(
+                "%(nodes)s Ironic nodes has been taken." %
+                {"nodes": len(nodes)}
+            )
+            self.executor.map(self.manage_node_provision_state, nodes)
 
     def manage_node_provision_state(self, node):
         if node.provision_state == ENROLL_PROVISION_STATE:
@@ -105,9 +110,8 @@ class NodeManager(object):
 
         try:
             self.facade.set_node_provision_state(node, 'manage')
-        except Exception:
-            LOG.error(traceback.format_exc())
-            return
+        except Exception as e:
+            LOG.error(e.message)
 
     def take_manageable_state_actions(self, node):
         LOG.info(
@@ -128,8 +132,8 @@ class NodeManager(object):
                 )
         try:
             self.facade.set_node_provision_state(node, 'provide')
-        except Exception:
-            LOG.error(traceback.format_exc())
+        except Exception as e:
+            LOG.error(e.message)
 
     def take_inspect_failed_state_actions(self, node):
         if (utils.dynamic_allocation_enabled(node) and
@@ -153,17 +157,6 @@ class NodeManager(object):
             server_hardware_uuid
         )
         return server_hardware_state == ONEVIEW_PROFILE_APPLIED
-
-    def server_hardware_has_server_profile_applied(self, node):
-        server_hardware_uri = utils.server_hardware_uri_from_node(
-            node
-        )
-        profile_applied = (
-            self.facade.is_server_profile_applied_on_server_hardware(
-                server_hardware_uri
-            )
-        )
-        return profile_applied
 
     def apply_server_profile(self, node):
         server_profile_uri = self.server_profile_uri_from_node(
