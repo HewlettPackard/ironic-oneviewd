@@ -171,6 +171,13 @@ class NodeManager(object):
         )
 
         node_info = utils.get_node_info_from_node(node)
+        server_hardware = self.facade.get_server_hardware(node_info)
+        server_profile_template_uri = node_info.get(
+            'server_profile_template_uri'
+        )
+        server_profile_template_uuid = utils.uuid_from_uri(
+            server_profile_template_uri
+        )
 
         server_profile_name = "Ironic [%s]" % (node.uuid)
 
@@ -179,7 +186,8 @@ class NodeManager(object):
                 server_profile_uri = (
                     self.facade.generate_and_assign_sp_from_spt(
                         server_profile_name,
-                        node_info
+                        server_hardware.uuid,
+                        server_profile_template_uuid
                     )
                 )
             except Exception:
