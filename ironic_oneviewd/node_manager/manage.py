@@ -231,7 +231,6 @@ class NodeManager(object):
     def apply_node_port_conf_for_dynamic_allocation(self, node):
         server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
         mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
-
         return self.get_a_port_to_apply_to_node(node, mac)
 
     def server_profile_uri_from_node(self, node):
@@ -277,7 +276,7 @@ class NodeManager(object):
                 "switch_id": "01:23:45:67:89:ab",
                 "port_id": "",
                 "switch_info": switch_info
-                }
+            }
         return local_link_connection
 
     def get_a_port_to_apply_to_node(self, node, mac):
@@ -293,8 +292,7 @@ class NodeManager(object):
 
     def apply_port_to_node(self, node, mac):
         if node.driver_info.get('use_oneview_ml2_driver'):
-            local_link_connection = \
-                self.set_local_link_connection(node, mac)
+            local_link_connection = self.set_local_link_connection(node, mac)
             return self.facade.create_node_port(node.uuid, mac,
                                                 local_link_connection)
         self.facade.create_node_port(node.uuid, mac)
