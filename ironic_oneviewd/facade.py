@@ -76,26 +76,6 @@ class Facade(object):
     def get_server_hardware(self, node_info):
         return self.oneview_client.get_server_hardware(node_info)
 
-    def get_server_hardware_state(self, uuid):
-        return self.oneview_client.get_server_hardware_state(
-            uuid
-        )
-
-    def get_server_profile_assigned_to_sh(self, node_info):
-        return self.oneview_client.get_server_profile_from_hardware(
-            node_info
-        )
-
-    def generate_and_assign_sp_from_spt(
-        self, server_profile_name,
-        server_hardware_uuid, server_profile_template_uuid
-    ):
-        return self.oneview_client.clone_template_and_apply(
-            server_profile_name,
-            server_hardware_uuid,
-            server_profile_template_uuid
-        )
-
     def unassign_server_profile(self, node_info):
         return self.oneview_client.delete_server_profile_from_server_hardware(
             node_info

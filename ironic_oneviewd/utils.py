@@ -44,7 +44,7 @@ LOG = logging.getLogger(__name__)
 
 
 def get_ironic_client():
-    """Generates an instance of the Ironic client.
+    """Generate an instance of the Ironic client.
 
     This method creates an instance of the Ironic client using the OpenStack
     credentials from config file and the imported ironicclient library.
@@ -78,7 +78,7 @@ def get_ironic_client():
 
 
 def get_oneview_client():
-    """Generates an instance of the OneView client.
+    """Generate an instance of the OneView client.
 
     Generates an instance of the OneView client using the imported
     oneview_client library.
@@ -124,7 +124,7 @@ def verify_node_extra(node):
 
 
 def capabilities_to_dict(capabilities):
-    """Parse the capabilities string into a dictionary
+    """Parse the capabilities string into a dictionary.
 
     :param capabilities: the node capabilities as a formatted string
     :raises: InvalidParameterValue if capabilities is not an string or has
@@ -145,22 +145,6 @@ def capabilities_to_dict(capabilities):
                 _("Malformed capabilities value: %s") % capability
             )
     return capabilities_dict
-
-
-def dynamic_allocation_enabled(node):
-    flag = node.driver_info.get('dynamic_allocation')
-    if flag:
-        if str(flag).lower() == 'true':
-            return True
-        elif str(flag).lower() == 'false':
-            return False
-        else:
-            msg = (("Invalid dynamic_allocation parameter value "
-                    "'%(flag)s' in node's %(node_uuid)s driver_info. "
-                    "Valid values are booleans true or false.") %
-                   {"flag": flag, "node_uuid": node.uuid})
-            raise exceptions.InvalidParameterValue(msg)
-    return False
 
 
 def get_node_info_from_node(node):
