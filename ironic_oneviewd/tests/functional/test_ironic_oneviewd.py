@@ -21,7 +21,6 @@ import unittest
 from ironic_oneviewd import facade
 from ironic_oneviewd.node_manager import manage
 from ironic_oneviewd.node_manager.manage import NodeManager
-from oneview_client.models import ServerProfile
 
 
 class FakeIronicNode(object):
@@ -74,6 +73,14 @@ class FakeServerHardware(object):
         self.enclosure_group_uri = enclosure_group_uri
         self.state = state
         self.enclosure_uri = enclosure_uri
+
+
+class FakeServerProfile(object):
+    attribute_map = {
+        'uri': 'uri',
+        'name': 'name',
+        'connections': 'connections',
+    }
 
 
 class FakeConfHelper(object):
@@ -306,7 +313,7 @@ class TestIronicOneviewd(unittest.TestCase):
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
-        server_profile = ServerProfile()
+        server_profile = FakeServerProfile()
         server_profile.connections = [
             {'mac': fake_node.ports[0]['address'], 'boot': {
                 'priority': "primary"}}
@@ -355,7 +362,7 @@ class TestIronicOneviewd(unittest.TestCase):
         fake_node.properties = properties
         mock.patch.dict(fake_node.properties, properties, clear=True)
 
-        server_profile = ServerProfile()
+        server_profile = FakeServerProfile()
         server_profile.connections = [
             {'mac': '01:23:45:67:89:ab', 'boot': {'priority': "primary"}}
         ]
