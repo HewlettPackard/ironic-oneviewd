@@ -14,20 +14,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import json
+import redfish
 import six
 
 from ironicclient import client as ironic_client
-
-from oslo_log import log as logging
 from oslo_utils import importutils
 
 from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
 from ironic_oneviewd.openstack.common._i18n import _
 
-client = importutils.try_import('oneview_client.client')
-oneview_states = importutils.try_import('oneview_client.states')
-oneview_exceptions = importutils.try_import('oneview_client.exceptions')
+hpclient = importutils.try_import('hpOneView.oneview_client')
 
 REQUIRED_ON_PROPERTIES = {
     'server_hardware_type_uri': _("Server Hardware Type URI Required."),
@@ -40,14 +38,12 @@ REQUIRED_ON_EXTRAS = {
 
 IRONIC_API_VERSION = 1
 
-LOG = logging.getLogger(__name__)
-
 
 def get_ironic_client():
     """Generate an instance of the Ironic client.
 
     This method creates an instance of the Ironic client using the OpenStack
-    credentials from config file and the imported ironicclient library.
+    credentials from config file and the ironicclient library.
 
     :returns: an instance of the Ironic client
     """
@@ -71,32 +67,32 @@ def get_ironic_client():
         'os_ironic_api_version': '1.22'
     }
 
-    LOG.debug("Using OpenStack credentials specified in the configuration "
-              "file to get Ironic Client")
-
     return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
 
 
-def get_oneview_client():
-    """Generate an instance of the OneView client.
+def get_hponeview_client():
+    """Generate an instance of the hpOneView client.
 
-    Generates an instance of the OneView client using the imported
+    Generates an instance of the hpOneView client using the hpOneView
     oneview_client library.
 
     :returns: an instance of the OneView client
     """
-    oneview_client = client.Client(
-        manager_url=CONF.oneview.manager_url,
-        username=CONF.oneview.username,
-        password=CONF.oneview.password,
-        allow_insecure_connections=CONF.oneview.allow_insecure_connections,
-        tls_cacert_file=CONF.oneview.tls_cacert_file,
-        max_polling_attempts=CONF.oneview.max_polling_attempts,
-        audit_enabled=CONF.oneview.audit_enabled,
-        audit_map_file=CONF.oneview.audit_map_file,
-        audit_output_file=CONF.oneview.audit_output_file
-    )
-    return oneview_client
+    return hpclient.OneViewClient(
+        {"ip": CONF.oneview.manager_url,
+         "credentials": {"userName": CONF.oneview.username,
+                         "password": CONF.oneview.password}})
+
+
+def get_ilorest_client(host_ip, ilo_token):
+    """Generate an instance of the ilorest library client.
+
+    Generates an instance of the ilorest client using the ilorest
+    rest_client library.
+
+    :returns: an instance of the ilorest client
+    """
+    return redfish.rest_client(base_url=host_ip, sessionkey=ilo_token)
 
 
 def verify_node_properties(node):
@@ -182,6 +178,25 @@ def server_profile_template_uri_from_node(node):
         'server_profile_template_uri'
     )
     return node_server_profile_template_uri
+
+
+def get_ilo_access(remote_console):
+    url = remote_console.get('remoteConsoleUrl')
+    url_parse = six.moves.urllib.parse.urlparse(url)
+    [host_ip] = six.moves.urllib.parse.parse_qs(url_parse.netloc).get('addr')
+    [token] = six.moves.urllib.parse.parse_qs(
+        url_parse.netloc).get('sessionkey')
+
+    return host_ip, token
+
+
+def get_server_hardware_mac_from_ilo(remote_console):
+    host_ip, token = get_ilo_access(remote_console)
+    client = get_ilorest_client('http://' + host_ip, token)
+    hardware = json.loads(client.get("/rest/v1/systems/1").text)
+    hardware_mac = hardware['HostCorrelation']['HostMACAddress'][0]
+
+    return hardware_mac
 
 
 def server_hardware_uri_from_node(node):

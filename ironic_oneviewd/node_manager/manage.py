@@ -131,21 +131,24 @@ class NodeManager(object):
             )
 
     def apply_node_port_conf(self, node):
-        server_hardware_uuid = utils.server_hardware_uuid_from_node(node)
-        mac = self.facade.get_server_hardware_mac(server_hardware_uuid)
+        node_info = utils.get_node_info_from_node(node)
+        mac = self.facade.get_server_hardware_mac(node_info)
         return self.get_a_port_to_apply_to_node(node, mac)
 
     def is_bootable(self, node, mac):
         node_info = utils.get_node_info_from_node(node)
         server_hardware = self.facade.get_server_hardware(node_info)
+        server_hardware_enclosure = server_hardware.get('locationUri')
 
         # DL hardware does't have managed networking.
-        if not server_hardware.enclosure_group_uri:
+        if not server_hardware_enclosure:
             return True
 
-        for server_hardware in server_hardware.port_map['deviceSlots']:
-            for physicalPorts in server_hardware['physicalPorts']:
-                if mac and mac.upper() == physicalPorts['mac'].upper():
+        sh_devices = server_hardware.get('portMap').get('deviceSlots')
+
+        for device_slot in sh_devices:
+            for physicalPort in device_slot.get('physicalPorts'):
+                if mac and mac.upper() == physicalPort['mac'].upper():
                     return True
         return False
 

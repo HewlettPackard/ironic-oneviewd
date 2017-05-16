@@ -15,14 +15,13 @@
 #    under the License.
 
 from ironic_oneviewd import utils
-from oneview_client import exceptions as oneview_exceptions
 
 
 class Facade(object):
 
     def __init__(self):
         self.ironicclient = utils.get_ironic_client()
-        self.oneview_client = utils.get_oneview_client()
+        self.oneview_client = utils.get_hponeview_client()
 
     # =========================================================================
     # Ironic actions
@@ -74,19 +73,25 @@ class Facade(object):
     # =========================================================================
 
     def get_server_hardware(self, node_info):
-        return self.oneview_client.get_server_hardware(node_info)
+        server_hardware_uri = node_info.get('server_hardware_uri')
+        return self.oneview_client.server_hardware.get(server_hardware_uri)
 
-    def unassign_server_profile(self, node_info):
-        return self.oneview_client.delete_server_profile_from_server_hardware(
-            node_info
-        )
-
-    def get_server_hardware_mac(self, uuid):
-        sh = self.oneview_client.get_server_hardware_by_uuid(uuid)
+    def get_server_hardware_mac(self, node_info):
+        server_hardware_uri = node_info.get('server_hardware_uri')
+        server_hardware = self.oneview_client.server_hardware.get(
+            server_hardware_uri)
         try:
             # MAC from ServerHardware
-            mac = sh.get_mac(nic_index=0)
-        except oneview_exceptions.OneViewException:
-            # MAC from iLO
-            mac = self.oneview_client.get_sh_mac_from_ilo(sh.uuid)
+            sh_device = server_hardware.get('portMap').get('deviceSlots')[0]
+            mac = sh_device.get('physicalPorts')[0].get('mac')
+        except Exception:
+            # MAC for Rack Servers from ilo
+            remote_console = (
+                self.oneview_client.server_hardware.get_remote_console_url(
+                    server_hardware_uri
+                )
+            )
+
+            mac = utils.get_server_hardware_mac_from_ilo(remote_console)
+
         return mac
