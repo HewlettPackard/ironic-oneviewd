@@ -180,14 +180,28 @@ def server_profile_template_uri_from_node(node):
     return node_server_profile_template_uri
 
 
-def get_ilo_access(remote_console):
-    url = remote_console.get('remoteConsoleUrl')
-    url_parse = six.moves.urllib.parse.urlparse(url)
-    [host_ip] = six.moves.urllib.parse.parse_qs(url_parse.netloc).get('addr')
-    [token] = six.moves.urllib.parse.parse_qs(
-        url_parse.netloc).get('sessionkey')
-
-    return host_ip, token
+def get_server_hardware_mac(server_hardware):
+    if server_hardware.get('portMap'):
+        try:
+            for device in server_hardware.get('portMap').get('deviceSlots'):
+                for physical_port in device.get('physicalPorts'):
+                    if physical_port.get('type') == 'Ethernet':
+                        sh_physical_port = physical_port
+                        break
+            for virtual_port in sh_physical_port.get('virtualPorts'):
+                # NOTE(nicodemos): Ironic oneview drivers needs to use a
+                # port that type is Ethernet and function 'a' to be able
+                # to make a deploy.
+                if virtual_port.get('portFunction') == 'a':
+                    return virtual_port.get('mac').lower()
+        except Exception:
+            raise exceptions.OneViewResourceNotFoundError(
+                "There is no Ethernet port on the Server Hardware: %s"
+                % server_hardware.get('uri'))
+    else:
+        raise exceptions.OneViewResourceNotFoundError(
+            "There is no portMap on the Server Hardware requested. Is "
+            "this a Rack server?")
 
 
 def get_server_hardware_mac_from_ilo(remote_console):
@@ -197,6 +211,16 @@ def get_server_hardware_mac_from_ilo(remote_console):
     hardware_mac = hardware['HostCorrelation']['HostMACAddress'][0]
 
     return hardware_mac
+
+
+def get_ilo_access(remote_console):
+    url = remote_console.get('remoteConsoleUrl')
+    url_parse = six.moves.urllib.parse.urlparse(url)
+    [host_ip] = six.moves.urllib.parse.parse_qs(url_parse.netloc).get('addr')
+    [token] = six.moves.urllib.parse.parse_qs(
+        url_parse.netloc).get('sessionkey')
+
+    return host_ip, token
 
 
 def server_hardware_uri_from_node(node):

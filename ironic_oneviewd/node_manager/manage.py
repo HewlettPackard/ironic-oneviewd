@@ -132,41 +132,18 @@ class NodeManager(object):
 
     def apply_node_port_conf(self, node):
         node_info = utils.get_node_info_from_node(node)
-        mac = self.facade.get_server_hardware_mac(node_info)
-        return self.get_a_port_to_apply_to_node(node, mac)
-
-    def is_bootable(self, node, mac):
-        node_info = utils.get_node_info_from_node(node)
         server_hardware = self.facade.get_server_hardware(node_info)
-        server_hardware_enclosure = server_hardware.get('locationUri')
 
-        # DL hardware does't have managed networking.
-        if not server_hardware_enclosure:
-            return True
+        try:
+            mac = utils.get_server_hardware_mac(server_hardware)
+        except exceptions.OneViewResourceNotFoundError as ex:
+            LOG.warning(six.text_type(ex))
+            console_url = self.facade.get_server_hardware_remote_console_url(
+                node_info
+            )
+            mac = utils.get_server_hardware_mac_from_ilo(console_url)
 
-        sh_devices = server_hardware.get('portMap').get('deviceSlots')
-
-        for device_slot in sh_devices:
-            for physicalPort in device_slot.get('physicalPorts'):
-                if mac and mac.upper() == physicalPort['mac'].upper():
-                    return True
-        return False
-
-    def set_local_link_connection(self, node, mac):
-        local_link_connection = {}
-        if node.driver_info.get('use_oneview_ml2_driver'):
-            server_hardware_id = utils.server_hardware_uuid_from_node(node)
-            switch_info = (
-                '{"server_hardware_id": "%(server_hardware_id)s", '
-                '"bootable": "%(bootable)s"}') % {
-                    'server_hardware_id': server_hardware_id,
-                    'bootable': self.is_bootable(node, mac)}
-            local_link_connection = {
-                "switch_id": "01:23:45:67:89:ab",
-                "port_id": "",
-                "switch_info": switch_info
-            }
-        return local_link_connection
+        return self.get_a_port_to_apply_to_node(node, mac)
 
     def get_a_port_to_apply_to_node(self, node, mac):
         port_list_by_mac = self.facade.get_port_list_by_mac(mac)
@@ -185,3 +162,19 @@ class NodeManager(object):
             return self.facade.create_node_port(
                 node.uuid, mac, local_link_connection)
         return self.facade.create_node_port(node.uuid, mac)
+
+    def set_local_link_connection(self, node, mac):
+        local_link_connection = {}
+        if node.driver_info.get('use_oneview_ml2_driver'):
+            server_hardware_id = utils.server_hardware_uuid_from_node(node)
+            switch_info = (
+                '{"server_hardware_id": "%(server_hardware_id)s", '
+                '"bootable": "%(bootable)s"}') % {
+                    'server_hardware_id': server_hardware_id,
+                    'bootable': True}
+            local_link_connection = {
+                "switch_id": "01:23:45:67:89:ab",
+                "port_id": "",
+                "switch_info": switch_info
+            }
+        return local_link_connection

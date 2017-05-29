@@ -76,22 +76,8 @@ class Facade(object):
         server_hardware_uri = node_info.get('server_hardware_uri')
         return self.oneview_client.server_hardware.get(server_hardware_uri)
 
-    def get_server_hardware_mac(self, node_info):
+    def get_server_hardware_remote_console_url(self, node_info):
         server_hardware_uri = node_info.get('server_hardware_uri')
-        server_hardware = self.oneview_client.server_hardware.get(
-            server_hardware_uri)
-        try:
-            # MAC from ServerHardware
-            sh_device = server_hardware.get('portMap').get('deviceSlots')[0]
-            mac = sh_device.get('physicalPorts')[0].get('mac')
-        except Exception:
-            # MAC for Rack Servers from ilo
-            remote_console = (
-                self.oneview_client.server_hardware.get_remote_console_url(
-                    server_hardware_uri
-                )
-            )
-
-            mac = utils.get_server_hardware_mac_from_ilo(remote_console)
-
-        return mac
+        return self.oneview_client.server_hardware.get_remote_console_url(
+            server_hardware_uri
+        )
