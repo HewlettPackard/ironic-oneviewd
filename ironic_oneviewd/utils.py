@@ -1,5 +1,5 @@
-# Copyright 2015 Hewlett-Packard Development Company, L.P.
-# Copyright 2015 Universidade Federal de Campina Grande
+# Copyright (2015-2017) Hewlett Packard Enterprise Development LP
+# Copyright (2015-2017) Universidade Federal de Campina Grande
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import json
 import redfish
 import six
 
@@ -178,39 +177,6 @@ def server_profile_template_uri_from_node(node):
         'server_profile_template_uri'
     )
     return node_server_profile_template_uri
-
-
-def get_server_hardware_mac(server_hardware):
-    if server_hardware.get('portMap'):
-        try:
-            for device in server_hardware.get('portMap').get('deviceSlots'):
-                for physical_port in device.get('physicalPorts'):
-                    if physical_port.get('type') == 'Ethernet':
-                        sh_physical_port = physical_port
-                        break
-            for virtual_port in sh_physical_port.get('virtualPorts'):
-                # NOTE(nicodemos): Ironic oneview drivers needs to use a
-                # port that type is Ethernet and function 'a' to be able
-                # to make a deploy.
-                if virtual_port.get('portFunction') == 'a':
-                    return virtual_port.get('mac').lower()
-        except Exception:
-            raise exceptions.OneViewResourceNotFoundError(
-                "There is no Ethernet port on the Server Hardware: %s"
-                % server_hardware.get('uri'))
-    else:
-        raise exceptions.OneViewResourceNotFoundError(
-            "There is no portMap on the Server Hardware requested. Is "
-            "this a Rack server?")
-
-
-def get_server_hardware_mac_from_ilo(remote_console):
-    host_ip, token = get_ilo_access(remote_console)
-    client = get_ilorest_client('http://' + host_ip, token)
-    hardware = json.loads(client.get("/rest/v1/systems/1").text)
-    hardware_mac = hardware['HostCorrelation']['HostMACAddress'][0]
-
-    return hardware_mac
 
 
 def get_ilo_access(remote_console):
