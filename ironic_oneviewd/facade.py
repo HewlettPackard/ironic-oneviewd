@@ -1,5 +1,5 @@
-# Copyright 2015 Hewlett-Packard Development Company, L.P.
-# Copyright 2015 Universidade Federal de Campina Grande
+# Copyright (2015-2017) Hewlett Packard Enterprise Development LP
+# Copyright (2015-2017) Universidade Federal de Campina Grande
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -48,25 +48,6 @@ class Facade(object):
 
     def set_node_provision_state(self, node, state):
         return self.ironicclient.node.set_provision_state(node.uuid, state)
-
-    def get_port_list_by_node_uuid(self, node_uuid):
-        return self.ironicclient.port.get(node_id=node_uuid)
-
-    def get_port(self, port_id):
-        return self.ironicclient.port.get(port_id)
-
-    def get_port_list_by_mac(self, port_mac_address):
-        return self.ironicclient.port.list(address=port_mac_address)
-
-    def create_node_port(
-        self, node_uuid, mac_address,
-        local_link_connection=None
-    ):
-        return self.ironicclient.port.create(
-            node_uuid=node_uuid,
-            local_link_connection=local_link_connection,
-            address=mac_address
-        )
 
     # =========================================================================
     # OneView actions

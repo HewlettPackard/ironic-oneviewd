@@ -1,5 +1,5 @@
-# Copyright 2016 Hewlett-Packard Development Company, L.P.
-# Copyright 2016 Universidade Federal de Campina Grande
+# Copyright (2016-2017) Hewlett Packard Enterprise Development LP
+# Copyright (2016-2017) Universidade Federal de Campina Grande
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -21,7 +21,6 @@ import unittest
 from ironic_oneviewd import facade
 from ironic_oneviewd.node_manager import manage
 from ironic_oneviewd.node_manager.manage import NodeManager
-from ironic_oneviewd import utils
 
 
 class FakeIronicNode(object):
@@ -254,135 +253,16 @@ class TestIronicOneviewd(unittest.TestCase):
         mock_facade.set_node_provision_state.assert_called_with(fake_node,
                                                                 'manage')
 
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    def test_set_local_link_connection_use_ml2_oneview(self, mock_facade):
-        switch_info = (
-            '{"server_hardware_id": "111112222233333", "bootable": "True"}')
-
-        local_link_connection = {
-            "switch_id": "01:23:45:67:89:ab",
-            "port_id": "",
-            "switch_info": switch_info
-        }
-
-        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
-        node_manager = NodeManager()
-        call_driver = node_manager.set_local_link_connection(
-            fake_node, "AA:BB:CC:DD:EE:FF"
-        )
-        self.assertDictEqual(local_link_connection, call_driver)
-
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    def test_set_local_link_connection_not_use_ml2_oneview(self, mock_facade):
-        local_link_connection = {}
-        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[2])
-        node_manager = NodeManager()
-
-        call_driver = node_manager.set_local_link_connection(
-            fake_node, "AA:BB:CC:DD:EE:FF"
-        )
-        self.assertDictEqual(local_link_connection, call_driver)
-
-    @mock.patch('ironic_oneviewd.node_manager.manage.LOG.warning')
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade, 'get_port')
-    @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
-    @mock.patch.object(facade.Facade, 'get_server_hardware')
-    @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch.object(utils, 'get_server_hardware_mac')
-    def test_log_warning_when_node_already_has_port_for_mac_address(
-        self, mock_get_server_hardware_mac, mock_create_node_port,
-        mock_get_server_hardware, mock_get_port_list_by_mac, mock_get_port,
-        mock_facade, mock_log
-    ):
-        mocked_facade = facade.Facade()
-        node_manager = NodeManager()
-
-        fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[0])
-        fake_node.provision_state = 'enroll'
-
-        info = {'server_hardware_uri': '/rest/server-hardware/123'}
-        fake_node.driver_info = info
-        mock.patch.dict(fake_node.driver_info, info, clear=True)
-
-        mock_get_server_hardware_mac.return_value = '01:23:45:67:89:ab'
-        mocked_facade.get_server_hardware_mac = mock_get_server_hardware_mac
-
-        properties = {'capabilities':
-                      "server_profile_template_uri:"
-                      "/rest/server-profile-templates/123"}
-        fake_node.properties = properties
-        mock.patch.dict(fake_node.properties, properties, clear=True)
-
-        server_profile = FakeServerProfile()
-        server_profile.connections = [
-            {'mac': fake_node.ports[0]['address'], 'boot': {
-                'priority': "primary"}}
-        ]
-
-        port_list_by_mac = copy.deepcopy(POOL_OF_FAKE_IRONIC_PORTS)
-        mock_get_port_list_by_mac.return_value = port_list_by_mac
-        mocked_facade.get_port_list_by_mac = mock_get_port_list_by_mac
-
-        fake_port = copy.deepcopy(POOL_OF_FAKE_IRONIC_PORTS[0])
-        mock_get_port.return_value = fake_port
-        mocked_facade.get_port = mock_get_port
-
-        node_manager.manage_node_provision_state(fake_node)
-
-        mock_get_port.assert_called_with(
-            fake_port.uuid
-        )
-
-    @mock.patch('ironic_oneviewd.facade.Facade', autospec=True)
-    @mock.patch.object(facade.Facade, 'get_port')
-    @mock.patch.object(facade.Facade, 'get_port_list_by_mac')
-    @mock.patch.object(facade.Facade, 'create_node_port')
-    @mock.patch.object(utils, 'get_server_hardware_mac')
-    def test_all_enroll_actions(
-        self, mock_get_server_hardware_mac, mock_create_node_port,
-        mock_get_port_list_by_mac, mock_get_port, mock_facade
-    ):
-
-        mocked_facade = facade.Facade()
+    @mock.patch('ironic_oneviewd.facade.Facade.set_node_provision_state',
+                autospec=True)
+    @mock.patch('ironic_oneviewd.facade.Facade', new_callable=mock.MagicMock)
+    def test_all_enroll_actions(self, mock_facade,
+                                mock_facade_set_node_provision_state):
         node_manager = NodeManager()
 
         fake_node = copy.deepcopy(POOL_OF_FAKE_IRONIC_NODES[1])
         fake_node.provision_state = 'enroll'
 
-        info = {
-            'server_hardware_uri': '/rest/server-hardware/123'
-        }
-        fake_node.driver_info = info
-        mock.patch.dict(fake_node.driver_info, info, clear=True)
-
-        properties = {'capabilities': ''}
-        fake_node.properties = properties
-        mock.patch.dict(fake_node.properties, properties, clear=True)
-
-        server_profile = FakeServerProfile()
-        server_profile.connections = [
-            {'mac': '01:23:45:67:89:ab', 'boot': {'priority': "primary"}}
-        ]
-
-        mock_get_server_hardware_mac.return_value = '01:23:45:67:89:ab'
-        mocked_facade.get_server_hardware_mac = mock_get_server_hardware_mac
-
-        port_list_by_mac = []
-        mock_get_port_list_by_mac.return_value = port_list_by_mac
-        mocked_facade.get_port_list_by_mac = mock_get_port_list_by_mac
-
-        fake_port = copy.deepcopy(POOL_OF_FAKE_IRONIC_PORTS[0])
-        mock_get_port.return_value = fake_port
-        mocked_facade.get_port = mock_get_port
-
-        port_created = True
-        mock_create_node_port.return_value = port_created
-        mocked_facade.create_node_port = mock_create_node_port
-
         node_manager.manage_node_provision_state(fake_node)
-
-        mock_create_node_port.assert_called_with(
-            fake_node.uuid,
-            '01:23:45:67:89:ab'
-        )
+        mock_facade_set_node_provision_state.assert_called_with(fake_node,
+                                                                'manage')
