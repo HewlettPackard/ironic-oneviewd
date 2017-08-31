@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import redfish
 import six
 
 from ironicclient import client as ironic_client
@@ -81,17 +80,6 @@ def get_hponeview_client():
         {"ip": CONF.oneview.manager_url,
          "credentials": {"userName": CONF.oneview.username,
                          "password": CONF.oneview.password}})
-
-
-def get_ilorest_client(host_ip, ilo_token):
-    """Generate an instance of the ilorest library client.
-
-    Generates an instance of the ilorest client using the ilorest
-    rest_client library.
-
-    :returns: an instance of the ilorest client
-    """
-    return redfish.rest_client(base_url=host_ip, sessionkey=ilo_token)
 
 
 def verify_node_properties(node):
