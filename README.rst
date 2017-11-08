@@ -20,7 +20,8 @@ state, and right after to an *available* state.
 .. note::
    This tool works with OpenStack Identity API v2.0 and v3.
 
-For more information on OneView entities, see [1]_.
+For more information on OneView entities, 
+see `here <https://www.hpe.com/us/en/integrated-systems/software.html>`_.
 
 Tested platforms
 ================
@@ -121,8 +122,3 @@ Python 2.7, 3.5 and pep8 validations.
 Run the following command::
 
     tox
-
-
-References
-==========
-.. [1] HPE OneView - https://www.hpe.com/us/en/integrated-systems/software.html
