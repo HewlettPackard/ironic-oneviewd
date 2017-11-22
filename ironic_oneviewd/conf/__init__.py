@@ -17,11 +17,13 @@
 from oslo_config import cfg
 
 from ironic_oneviewd.conf import default
+from ironic_oneviewd.conf import inventory
 from ironic_oneviewd.conf import oneview
 from ironic_oneviewd.conf import openstack
 
 CONF = cfg.CONF
 
 default.register_opts(CONF)
+inventory.register_opts(CONF)
 oneview.register_opts(CONF)
 openstack.register_opts(CONF)

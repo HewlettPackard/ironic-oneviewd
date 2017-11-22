@@ -24,15 +24,13 @@ import sys
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 
+import ironic_oneviewd
 from ironic_oneviewd.conf import CONF
-from ironic_oneviewd.node_manager import commands as oneviewd_commands
-from ironic_oneviewd.openstack.common._i18n import _
-from ironic_oneviewd.openstack.common import cliutils
-
-VERSION = '0.6.0'
+from ironic_oneviewd import manage as oneviewd_manager
+from ironic_oneviewd import utils
 
 COMMAND_MODULES = [
-    oneviewd_commands,
+    oneviewd_manager,
 ]
 
 
@@ -56,7 +54,7 @@ class IronicOneViewD(object):
 
         parser.add_argument('--version',
                             action='version',
-                            version=VERSION)
+                            version=ironic_oneviewd.__version__)
 
         parser.add_argument('-c', '--config-file',
                             default='/etc/ironic-oneviewd/'
@@ -78,15 +76,15 @@ class IronicOneViewD(object):
         define_commands_from_module(subparsers, self, self.subcommands)
         return parser
 
-    @cliutils.arg('command', metavar='<subcommand>', nargs='?',
-                  help='Display help for <subcommand>')
+    @utils.arg('command', metavar='<subcommand>', nargs='?',
+               help='Display help for <subcommand>')
     def do_help(self, args):
         """Display help about this program or one of its subcommands."""
         if getattr(args, 'command', None):
             if args.command in self.subcommands:
                 self.subcommands[args.command].print_help()
             else:
-                raise Exception(_("'%s' is not a valid subcommand") %
+                raise Exception("'%s' is not a valid subcommand" %
                                 args.command)
         else:
             self.parser.print_help()
@@ -106,7 +104,7 @@ class IronicOneViewD(object):
             self.do_help(options)
 
         if 'help' not in argv:
-            oneviewd_commands.do_manage_ironic_nodes()
+            oneviewd_manager.do_oneview_daemon()
 
         args = subcommand_parser.parse_args(argv)
 

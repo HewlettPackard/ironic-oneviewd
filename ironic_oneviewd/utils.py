@@ -21,17 +21,16 @@ from oslo_utils import importutils
 
 from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
-from ironic_oneviewd.openstack.common._i18n import _
 
 hpclient = importutils.try_import('hpOneView.oneview_client')
 
 REQUIRED_ON_PROPERTIES = {
-    'server_hardware_type_uri': _("Server Hardware Type URI Required."),
-    'server_profile_template_uri': _("Server Profile Template URI required"),
+    'server_hardware_type_uri': "Server Hardware Type URI Required.",
+    'server_profile_template_uri': "Server Profile Template URI required",
 }
 
 REQUIRED_ON_EXTRAS = {
-    'server_hardware_uri': _("Server Hardware URI. Required."),
+    'server_hardware_uri': "Server Hardware URI. Required.",
 }
 
 IRONIC_API_VERSION = 1
@@ -62,7 +61,7 @@ def get_ironic_client():
         'os_user_domain_name': CONF.openstack.user_domain_name,
         'os_project_domain_id': CONF.openstack.project_domain_id,
         'os_project_domain_name': CONF.openstack.project_domain_name,
-        'os_ironic_api_version': '1.22'
+        'os_ironic_api_version': '1.32'
     }
 
     return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
@@ -75,11 +74,45 @@ def get_hponeview_client():
     oneview_client library.
 
     :returns: an instance of the OneView client
+    :raises: OneViewNotAuthorizedException if is not an insecure connection and
+             there is no CA certificate file path in configuration.
     """
-    return hpclient.OneViewClient(
-        {"ip": CONF.oneview.manager_url,
-         "credentials": {"userName": CONF.oneview.username,
-                         "password": CONF.oneview.password}})
+    config = {
+        "ip": CONF.oneview.manager_url,
+        "credentials": {
+            "userName": CONF.oneview.username,
+            "password": CONF.oneview.password
+        }
+    }
+    return hpclient.OneViewClient(config)
+
+
+def arg(*args, **kwargs):
+    """Decorator for CLI args.
+
+    Example:
+
+    >>> @arg("name", help="Name of the new entity")
+    ... def entity_create(args):
+    ...     pass
+    """
+    def _decorator(func):
+        add_arg(func, *args, **kwargs)
+        return func
+    return _decorator
+
+
+def add_arg(func, *args, **kwargs):
+    """Bind CLI arguments to a shell.py `do_foo` function."""
+    if not hasattr(func, 'arguments'):
+        func.arguments = []
+
+    # NOTE(sirp): avoid dups that can occur when the module is shared across
+    # tests.
+    if (args, kwargs) not in func.arguments:
+        # Because of the semantics of decorator composition if we just append
+        # to the options list positional options will appear to be backwards.
+        func.arguments.insert(0, (args, kwargs))
 
 
 def verify_node_properties(node):
@@ -87,9 +120,8 @@ def verify_node_properties(node):
     for key in REQUIRED_ON_PROPERTIES:
         if key not in properties:
             raise exceptions.MissingParameterValue(
-                _("Missing the following OneView data in node's "
-                  "properties/capabilities: %s.") % key
-            )
+                ("Missing the following OneView data in node's "
+                 "properties/capabilities: %s.") % key)
 
     return properties
 
@@ -99,8 +131,7 @@ def verify_node_extra(node):
     for key in REQUIRED_ON_EXTRAS:
         if not extra.get(key):
             raise exceptions.MissingParameterValue(
-                _("Missing the following OneView data in node's extra: %s.")
-                % key
+                "Missing the following OneView data in node's extra: %s." % key
             )
 
     return extra
@@ -117,16 +148,15 @@ def capabilities_to_dict(capabilities):
     if capabilities:
         if not isinstance(capabilities, six.string_types):
             raise exceptions.InvalidParameterValue(
-                _("Value of 'capabilities' must be string. Got %s")
-                % type(capabilities))
+                "Value of 'capabilities' must be string. Got %s" %
+                type(capabilities))
         try:
             for capability in capabilities.split(','):
                 key, value = capability.split(':')
                 capabilities_dict[key] = value
         except ValueError:
             raise exceptions.InvalidParameterValue(
-                _("Malformed capabilities value: %s") % capability
-            )
+                "Malformed capabilities value: %s" % capability)
     return capabilities_dict
 
 
