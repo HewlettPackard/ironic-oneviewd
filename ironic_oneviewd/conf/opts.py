@@ -18,8 +18,9 @@ import ironic_oneviewd.conf
 
 _opts = [
     ('DEFAULT', ironic_oneviewd.conf.default.opts),
-    ('openstack', ironic_oneviewd.conf.openstack.opts),
-    ('oneview', ironic_oneviewd.conf.oneview.opts)
+    ('inventory', ironic_oneviewd.conf.inventory.opts),
+    ('oneview', ironic_oneviewd.conf.oneview.opts),
+    ('openstack', ironic_oneviewd.conf.openstack.opts)
 ]
 
 

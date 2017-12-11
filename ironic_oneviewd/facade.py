@@ -53,9 +53,26 @@ class Facade(object):
     # OneView actions
     # =========================================================================
 
+    def get_server_profile_template(self, spt_uuid):
+        """Get HPE OneView Server Profile Template by UUID.
+
+        :param spt_uuid: UUID of the Server Profile Template.
+        :returns: Server Profile Template object.
+        """
+        return self.oneview_client.server_profile_templates.get(spt_uuid)
+
     def get_server_hardware(self, node_info):
         server_hardware_uri = node_info.get('server_hardware_uri')
         return self.oneview_client.server_hardware.get(server_hardware_uri)
+
+    def filter_server_hardware_available(self, filters=''):
+        """Get all HPE OneView Server Hardware.
+
+        :param filters: Filter the Server Hardware you want to return.
+                        ex.: serverHardwareTypeUri='rest/111-222-333'
+        :returns: List of all filtered Server Hardware.
+        """
+        return self.oneview_client.server_hardware.get_all(filter=filters)
 
     def get_server_hardware_remote_console_url(self, node_info):
         server_hardware_uri = node_info.get('server_hardware_uri')

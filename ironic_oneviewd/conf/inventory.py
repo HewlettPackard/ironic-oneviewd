@@ -1,5 +1,5 @@
-# Copyright (2016-2017) Hewlett Packard Enterprise Development LP
-# Copyright (2016-2017) Universidade Federal de Campina Grande
+# Copyright 2017 Hewlett Packard Enterprise Development LP
+# Copyright 2017 Universidade Federal de Campina Grande
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -19,15 +19,14 @@ from oslo_config import cfg
 CONF = cfg.CONF
 
 opts = [
-    cfg.StrOpt('manager_url',
-               help='URL where OneView is available.'),
-    cfg.StrOpt('username',
-               help='OneView username to be used.'),
-    cfg.StrOpt('password',
-               secret=True,
-               help='OneView password to be used.')
+    cfg.IntOpt('check_interval',
+               default=300,
+               help='Interval in seconds for daemon to check for '
+                    'not enrolled Server Hardware.'),
+    cfg.ListOpt('server_profile_templates',
+                help='List of Server Profile Templates UUIDs')
 ]
 
 
 def register_opts(conf):
-    conf.register_opts(opts, group='oneview')
+    conf.register_opts(opts, group='inventory')

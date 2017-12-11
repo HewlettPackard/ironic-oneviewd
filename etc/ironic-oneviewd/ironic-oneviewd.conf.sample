@@ -12,6 +12,20 @@
 #rpc_thread_pool_size = 20
 
 
+[inventory]
+
+#
+# From ironic-oneviewd
+#
+
+# Interval in seconds for daemon to check for not enrolled
+# Server Hardware. (integer value)
+#check_interval = 300
+
+# List of Server Profile Templates UUIDs (list value)
+#server_profile_templates = <None>
+
+
 [oneview]
 
 #
