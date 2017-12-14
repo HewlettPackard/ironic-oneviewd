@@ -41,6 +41,13 @@
 # OneView password to be used. (string value)
 #password = <None>
 
+# Option to allow insecure connection with OneView. (boolean
+# value)
+#allow_insecure_connections = false
+
+# Path to OneView CA certificate file. (string value)
+#tls_cacert_file = <None>
+
 
 [openstack]
 

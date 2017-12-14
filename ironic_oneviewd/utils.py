@@ -17,12 +17,16 @@
 import six
 
 from ironicclient import client as ironic_client
+from oslo_log import log as logging
 from oslo_utils import importutils
 
 from ironic_oneviewd.conf import CONF
 from ironic_oneviewd import exceptions
 
+LOG = logging.getLogger(__name__)
+
 hpclient = importutils.try_import('hpOneView.oneview_client')
+oneview_exceptions = importutils.try_import('hpOneView.exceptions')
 
 REQUIRED_ON_PROPERTIES = {
     'server_hardware_type_uri': "Server Hardware Type URI Required.",
@@ -72,7 +76,13 @@ def get_ironic_client():
         'os_ironic_api_version': '1.32'
     }
 
-    return ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
+    try:
+        client = ironic_client.get_client(IRONIC_API_VERSION, **daemon_kwargs)
+    except Exception as exc:
+        LOG.error(exc.msg)
+        raise exc
+
+    return client
 
 
 def get_hponeview_client():
@@ -85,14 +95,44 @@ def get_hponeview_client():
     :raises: OneViewNotAuthorizedException if is not an insecure connection and
              there is no CA certificate file path in configuration.
     """
+    insecure = CONF.oneview.allow_insecure_connections
+    ssl_certificate = CONF.oneview.tls_cacert_file
+
+    if not (insecure or ssl_certificate):
+        LOG.error("Failed to start Ironic OneView Daemon. Attempting to open "
+                  "secure connection to OneView but CA certificate file is "
+                  "missing. Please check your configuration file. Will "
+                  "attempt to start again...")
+        raise exceptions.OneViewNotAuthorizedException()
+    elif insecure:
+        LOG.info("Ironic OneView Daemon is opening an insecure connection to "
+                 "HPE OneView. We recommend you to configure secure "
+                 "connections with a CA certificate file.")
+
+        if ssl_certificate:
+            LOG.info("Insecure connection to OneView, the CA certificate "
+                     "file: %s will be ignored." % ssl_certificate)
+            ssl_certificate = None
+
     config = {
         "ip": CONF.oneview.manager_url,
         "credentials": {
             "userName": CONF.oneview.username,
             "password": CONF.oneview.password
-        }
+        },
+        "ssl_certificate": ssl_certificate
     }
-    return hpclient.OneViewClient(config)
+
+    try:
+        client = hpclient.OneViewClient(config)
+    except oneview_exceptions.HPOneViewException as exc:
+        LOG.error(
+            "Ironic OneView Daemon could not open a connection to HPE "
+            "OneView. Check credentials and/or CA certificate file. See "
+            "details on error below:\n")
+        raise exc
+
+    return client
 
 
 def arg(*args, **kwargs):

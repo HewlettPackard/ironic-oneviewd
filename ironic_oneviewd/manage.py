@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 def do_oneview_daemon():
     """Ironic OneView Daemon."""
-    LOG.info('Starting OneView Daemon')
+    LOG.info('Starting Ironic OneView Daemon')
 
     facade = Facade()
     node_manager = NodeManager(facade)

@@ -25,7 +25,12 @@ opts = [
                help='OneView username to be used.'),
     cfg.StrOpt('password',
                secret=True,
-               help='OneView password to be used.')
+               help='OneView password to be used.'),
+    cfg.BoolOpt('allow_insecure_connections',
+                default=False,
+                help='Option to allow insecure connection with OneView.'),
+    cfg.StrOpt('tls_cacert_file',
+               help='Path to OneView CA certificate file.')
 ]
 
 
