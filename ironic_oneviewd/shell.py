@@ -16,10 +16,10 @@
 """Daemon to the Ironic OneView drivers."""
 
 from __future__ import print_function
+import sys
 
 import argparse
 import six
-import sys
 
 from oslo_log import log as logging
 from oslo_utils import encodeutils
@@ -34,45 +34,47 @@ COMMAND_MODULES = [
 ]
 
 
+def get_base_parser():
+    parser = argparse.ArgumentParser(
+        prog='ironic-oneviewd',
+        description=__doc__.strip(),
+        epilog='See "ironic-oneviewd --help COMMAND" '
+               'for help on a specific command.',
+        add_help=False,
+        formatter_class=HelpFormatter,
+    )
+
+    # Global arguments
+    parser.add_argument('-h', '--help',
+                        action='store_true',
+                        help=argparse.SUPPRESS)
+
+    parser.add_argument('--version',
+                        action='version',
+                        version=ironic_oneviewd.__version__)
+
+    parser.add_argument('-c', '--config-file',
+                        default='/etc/ironic-oneviewd/'
+                                'ironic-oneviewd.conf',
+                        help='Path to the Ironic OneView daemon '
+                             'configuration file.')
+
+    parser.add_argument('-l', '--log-file',
+                        help='Path to the Ironic OneView daemon '
+                             'logging file.')
+
+    return parser
+
+
 class IronicOneViewD(object):
-
-    def get_base_parser(self):
-        parser = argparse.ArgumentParser(
-            prog='ironic-oneviewd',
-            description=__doc__.strip(),
-            epilog='See "ironic-oneviewd --help COMMAND" '
-                   'for help on a specific command.',
-            add_help=False,
-            formatter_class=HelpFormatter,
-        )
-
-        # Global arguments
-        parser.add_argument('-h', '--help',
-                            action='store_true',
-                            help=argparse.SUPPRESS,
-                            )
-
-        parser.add_argument('--version',
-                            action='version',
-                            version=ironic_oneviewd.__version__)
-
-        parser.add_argument('-c', '--config-file',
-                            default='/etc/ironic-oneviewd/'
-                                    'ironic-oneviewd.conf',
-                            help='Path to the Ironic OneView daemon '
-                                 'configuration file.')
-
-        parser.add_argument('-l', '--log-file',
-                            help='Path to the Ironic OneView daemon '
-                                 'logging file.')
-
-        return parser
-
-    def get_subcommand_parser(self, version):
-        parser = self.get_base_parser()
+    def __init__(self):
         self.subcommands = {}
+        self.parser = None
+
+    def get_subcommand_parser(self):
+        parser = get_base_parser()
         subparsers = parser.add_subparsers(metavar='<subcommand>')
-        enhance_parser(parser, subparsers, self.subcommands)
+        enhance_parser(subparsers, self.subcommands)
         define_commands_from_module(subparsers, self, self.subcommands)
         return parser
 
@@ -91,9 +93,9 @@ class IronicOneViewD(object):
 
     def main(self, argv):
         log_domain = "DEFAULT"
-        parser = self.get_base_parser()
+        parser = get_base_parser()
         (options, args) = parser.parse_known_args(argv)
-        subcommand_parser = self.get_subcommand_parser(1)
+        subcommand_parser = self.get_subcommand_parser()
         self.parser = subcommand_parser
 
         logging.register_options(CONF)
@@ -122,10 +124,10 @@ def define_command(subparsers, command, callback, cmd_mapper):
     :param callback: function that will be used to process the command
     """
     desc = callback.__doc__ or ''
-    help = desc.strip().split('\n')[0]
+    daemon_help = desc.strip().split('\n')[0]
     arguments = getattr(callback, 'arguments', [])
 
-    subparser = subparsers.add_parser(command, help=help,
+    subparser = subparsers.add_parser(command, help=daemon_help,
                                       description=desc,
                                       add_help=False,
                                       formatter_class=HelpFormatter)
@@ -146,7 +148,7 @@ def define_commands_from_module(subparsers, command_module, cmd_mapper):
         define_command(subparsers, command, callback, cmd_mapper)
 
 
-def enhance_parser(parser, subparsers, cmd_mapper):
+def enhance_parser(subparsers, cmd_mapper):
     for command_module in COMMAND_MODULES:
         define_commands_from_module(subparsers, command_module, cmd_mapper)
 
@@ -164,8 +166,8 @@ def main():
     except KeyboardInterrupt:
         print("\nironic-oneviewd stopped", file=sys.stderr)
         sys.exit(130)
-    except Exception as e:
-        print(encodeutils.safe_encode(six.text_type(e)), file=sys.stderr)
+    except Exception as exc:
+        print(encodeutils.safe_encode(six.text_type(exc)), file=sys.stderr)
         sys.exit(1)
 
 

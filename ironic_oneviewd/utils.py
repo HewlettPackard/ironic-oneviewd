@@ -35,6 +35,14 @@ REQUIRED_ON_EXTRAS = {
 
 IRONIC_API_VERSION = 1
 
+SUPPORTED_CLASSIC_DRIVERS = [
+    'agent_pxe_oneview',
+    'iscsi_pxe_oneview',
+    'fake_oneview'
+]
+SUPPORTED_HARDWARE_TYPES = ['oneview']
+SUPPORTED_DRIVERS = SUPPORTED_HARDWARE_TYPES + SUPPORTED_CLASSIC_DRIVERS
+
 
 def get_ironic_client():
     """Generate an instance of the Ironic client.

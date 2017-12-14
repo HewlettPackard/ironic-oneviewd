@@ -29,14 +29,6 @@ MANAGEABLE_PROVISION_STATE = 'manageable'
 INSPECTION_FAILED_PROVISION_STATE = 'inspect failed'
 IN_USE_BY_ONEVIEW = 'is already in use by OneView.'
 
-SUPPORTED_CLASSIC_DRIVERS = [
-    'agent_pxe_oneview',
-    'iscsi_pxe_oneview',
-    'fake_oneview'
-]
-SUPPORTED_HARDWARE_TYPES = ['oneview']
-SUPPORTED_DRIVERS = SUPPORTED_HARDWARE_TYPES + SUPPORTED_CLASSIC_DRIVERS
-
 ACTION_STATES = [ENROLL_PROVISION_STATE,
                  MANAGEABLE_PROVISION_STATE,
                  INSPECTION_FAILED_PROVISION_STATE]
@@ -56,7 +48,7 @@ class NodeManager(object):
         while True:
             ironic_nodes = self.facade.get_ironic_node_list()
             provide_nodes = [node for node in ironic_nodes
-                             if node.driver in SUPPORTED_DRIVERS
+                             if node.driver in utils.SUPPORTED_DRIVERS
                              if node.maintenance is False
                              if node.provision_state in ACTION_STATES]
             if provide_nodes:
@@ -82,8 +74,8 @@ class NodeManager(object):
                  {'node': node.uuid})
         try:
             self.facade.set_node_provision_state(node, 'manage')
-        except Exception as e:
-            LOG.error(e.message)
+        except Exception as exc:
+            LOG.error(exc.message)
 
     def take_manageable_state_actions(self, node):
         LOG.info("Taking manageable state actions for node %(node)s." %
@@ -104,7 +96,7 @@ class NodeManager(object):
 
     def take_inspect_failed_state_actions(self, node):
         try:
-            if (node.last_error and (IN_USE_BY_ONEVIEW in node.last_error)):
+            if node.last_error and IN_USE_BY_ONEVIEW in node.last_error:
                 LOG.info("Inspection failed on node %(node)s due to machine "
                          "being in use by OneView. Moving it back to "
                          "manageable state." % {'node': node.uuid})

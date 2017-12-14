@@ -33,13 +33,13 @@ def do_oneview_daemon():
     inventory_manager = InventoryManager(facade)
 
     def execute():
-        p1 = Process(target=node_manager.run)
-        p1.start()
+        process1 = Process(target=node_manager.run)
+        process1.start()
 
-        p2 = Process(target=inventory_manager.run)
-        p2.start()
+        process2 = Process(target=inventory_manager.run)
+        process2.start()
 
-        p1.join()
-        p2.join()
+        process1.join()
+        process2.join()
 
     execute()

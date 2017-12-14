@@ -20,18 +20,11 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 
 from ironic_oneviewd.conf import CONF
+from ironic_oneviewd import utils
 
 client_exception = importutils.try_import('hpOneView.exceptions')
 
 LOG = logging.getLogger(__name__)
-
-SUPPORTED_CLASSIC_DRIVERS = [
-    'agent_pxe_oneview',
-    'iscsi_pxe_oneview',
-    'fake_oneview'
-]
-SUPPORTED_HARDWARE_TYPES = ['oneview']
-SUPPORTED_DRIVERS = SUPPORTED_HARDWARE_TYPES + SUPPORTED_CLASSIC_DRIVERS
 
 
 class InventoryManager(object):
@@ -45,17 +38,17 @@ class InventoryManager(object):
             ironic_nodes = self.facade.get_ironic_node_list()
             profile_templates = CONF.inventory.server_profile_templates
             oneview_nodes = [node for node in ironic_nodes
-                             if node.driver in SUPPORTED_DRIVERS
+                             if node.driver in utils.SUPPORTED_DRIVERS
                              if node.maintenance is False]
             if profile_templates:
-                self._check_not_enrolled_hardware(
+                self.check_not_enrolled_hardware(
                     oneview_nodes, profile_templates)
             else:
                 LOG.info("There is no Server Profile Templates to check.")
 
             time.sleep(check_interval)
 
-    def _check_not_enrolled_hardware(self, oneview_nodes, profile_templates):
+    def check_not_enrolled_hardware(self, oneview_nodes, profile_templates):
         """Check the Servers Hardware that is not enrolled in Ironic nodes.
 
         This method will log all Servers Hardware that is not enrolled as an
