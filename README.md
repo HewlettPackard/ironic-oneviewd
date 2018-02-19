@@ -1,6 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/ironic-oneviewd.svg)](https://badge.fury.io/py/ironic-oneviewd)
 [![Build Status](https://travis-ci.org/HewlettPackard/ironic-oneviewd.svg?branch=master)](https://travis-ci.org/HewlettPackard/ironic-oneviewd)
-[![Coverage Status](https://coveralls.io/repos/github/HewlettPackard/ironic-oneviewd/badge.svg)](https://coveralls.io/github/HewlettPackard/ironic-oneviewd)
+[![Coverage Status](https://codecov.io/gh/HewlettPackard/ironic-oneviewd/branch/master/graphs/badge.svg)](https://codecov.io/gh/HewlettPackard/ironic-oneviewd)
 
 # Ironic OneView Daemon
 
